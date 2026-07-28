@@ -5,6 +5,7 @@ from pathlib import Path
 # 已知的 Agent 配置文件及其类型
 AGENT_CONFIGS = {
     "AGENTS.md": "agents_md",
+    "CLAUDE.md": "claude_md",
     ".cursorrules": "cursorrules",
     ".github/copilot-instructions.md": "copilot",
     ".claude/settings.json": "claude_code",

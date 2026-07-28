@@ -5,7 +5,6 @@ from pathlib import Path
 import click
 from rich.console import Console
 from rich.prompt import Confirm
-from rich.table import Table
 
 from .analyzer.project_analyzer import analyze_project
 from .reporter.health_report import print_health_report
@@ -15,6 +14,7 @@ console = Console()
 # 生成器类型到模块的映射
 GENERATOR_MAP = {
     "agents": ("generator.agents_md", "AgentsMdGenerator"),
+    "claude": ("generator.claude_md", "ClaudeMdGenerator"),
     "cursorrules": ("generator.cursorrules", "CursorRulesGenerator"),
     "copilot": ("generator.copilot", "CopilotGenerator"),
     "mcp": ("generator.mcp_config", "McpConfigGenerator"),
@@ -36,7 +36,7 @@ def _load_generator(name: str, analysis):
 def main():
     """agentready — 一条命令让任何项目对 AI Agent 友好。
 
-    自动生成 AGENTS.md、.cursorrules、MCP 配置、Skill 文件，
+    自动生成 AGENTS.md、CLAUDE.md、.cursorrules、MCP 配置、Skill 文件，
     让 Claude Code、Cursor、Copilot 等 AI 编程助手立即理解你的项目。
     """
     pass
@@ -45,13 +45,17 @@ def main():
 @main.command()
 @click.argument("path", default=".", type=click.Path(exists=True))
 @click.option("--force", is_flag=True, help="覆盖已有配置文件")
-def init(path, force):
+@click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
+def init(path, force, no_env):
     """扫描项目并一键生成所有 Agent 配置文件。"""
     project_path = Path(path).resolve()
     console.print(f"[bold blue]🔍 正在扫描项目:[/bold blue] {project_path}")
 
+    if not no_env:
+        console.print("[dim]📡 扫描开发环境...[/dim]")
+
     # 分析项目
-    analysis = analyze_project(project_path)
+    analysis = analyze_project(project_path, scan_env=not no_env)
     print_health_report(analysis, console)
 
     # 检查已有配置
@@ -96,12 +100,13 @@ def init(path, force):
 @click.option("--format", "output_format", default="terminal",
               type=click.Choice(["terminal", "html"]),
               help="输出格式")
-def analyze(path, output_format):
+@click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
+def analyze(path, output_format, no_env):
     """分析项目结构并输出健康度报告（不生成文件）。"""
     project_path = Path(path).resolve()
     console.print(f"[bold blue]📊 正在分析项目:[/bold blue] {project_path}")
 
-    analysis = analyze_project(project_path)
+    analysis = analyze_project(project_path, scan_env=not no_env)
 
     if output_format == "terminal":
         print_health_report(analysis, console)
@@ -112,10 +117,11 @@ def analyze(path, output_format):
 @main.command()
 @click.argument("path", default=".", type=click.Path(exists=True))
 @click.option("--type", "file_types", multiple=True,
-              type=click.Choice(["agents", "cursorrules", "copilot", "mcp", "skill"]),
+              type=click.Choice(["agents", "claude", "cursorrules", "copilot", "mcp", "skill"]),
               help="要生成的配置文件类型（可多次指定）")
 @click.option("--force", is_flag=True, help="覆盖已有配置文件")
-def generate(path, file_types, force):
+@click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
+def generate(path, file_types, force, no_env):
     """选择性生成指定类型的配置文件。"""
     if not file_types:
         console.print("[red]请至少指定一个文件类型，例如: --type agents --type mcp[/red]")
@@ -127,7 +133,7 @@ def generate(path, file_types, force):
     project_path = Path(path).resolve()
     console.print(f"[bold blue]⚙️  正在生成配置:[/bold blue] {', '.join(file_types)}")
 
-    analysis = analyze_project(project_path)
+    analysis = analyze_project(project_path, scan_env=not no_env)
 
     for gen_name in file_types:
         gen = _load_generator(gen_name, analysis)
