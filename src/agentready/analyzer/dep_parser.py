@@ -1,7 +1,7 @@
 """依赖文件解析器 — 支持多种包管理格式"""
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 
 class DepInfo:
@@ -94,7 +94,7 @@ def _parse_pyproject(filepath: Path) -> list[DepInfo]:
 
         # 提取 = 右边的值
         eq_pos = line.index("=")
-        value_part = line[eq_pos + 1:].strip()
+        value_part = line[eq_pos + 1 :].strip()
 
         if value_part.startswith("["):
             if value_part.endswith("]"):
@@ -155,6 +155,7 @@ def _parse_package_json(filepath: Path) -> list[DepInfo]:
     deps: list[DepInfo] = []
     try:
         import json
+
         data = json.loads(filepath.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, OSError, ValueError):
         return deps

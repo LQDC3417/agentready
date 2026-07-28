@@ -1,6 +1,7 @@
 """CLI 端到端测试"""
 
 from click.testing import CliRunner
+
 from agentready.cli import main
 
 

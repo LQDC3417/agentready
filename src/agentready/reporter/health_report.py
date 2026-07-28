@@ -1,8 +1,8 @@
 """项目健康度报告生成器"""
 
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 from ..analyzer.project_analyzer import ProjectAnalysis
@@ -15,11 +15,13 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
 
     # 标题
     console.print()
-    console.print(Panel(
-        f"[bold]{analysis.project_name}[/bold]",
-        title="📊 项目健康度报告",
-        border_style="blue",
-    ))
+    console.print(
+        Panel(
+            f"[bold]{analysis.project_name}[/bold]",
+            title="📊 项目健康度报告",
+            border_style="blue",
+        )
+    )
 
     # 语言信息
     if analysis.languages:
@@ -29,7 +31,7 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
                 lang_text.append(" | ")
             label = "主" if i == 0 else f"{ratio:.0%}"
             lang_text.append(f"{lang} ({label})", style="bold green" if i == 0 else "dim")
-        console.print(f"\n[bold]语言:[/bold] ", end="")
+        console.print("\n[bold]语言:[/bold] ", end="")
         console.print(lang_text)
 
     # 框架/依赖
@@ -82,7 +84,7 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
 
     # 开发环境摘要
     if analysis.env_info.tools:
-        console.print(f"\n[bold]开发环境:[/bold]")
+        console.print("\n[bold]开发环境:[/bold]")
         for name, version in analysis.env_info.tools[:8]:
             console.print(f"  {name}: [dim]{version}[/dim]")
         if len(analysis.env_info.tools) > 8:
@@ -93,18 +95,18 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
         fw = f" ({analysis.test_framework})" if analysis.test_framework else ""
         console.print(f"\n[bold]测试:[/bold] [green]✅ 检测到{fw}[/green]")
     else:
-        console.print(f"\n[bold]测试:[/bold] [red]❌ 未检测到测试配置[/red]")
+        console.print("\n[bold]测试:[/bold] [red]❌ 未检测到测试配置[/red]")
 
     # CI 信息
     if analysis.has_ci:
-        console.print(f"[bold]CI/CD:[/bold] [green]✅ 已配置[/green]")
+        console.print("[bold]CI/CD:[/bold] [green]✅ 已配置[/green]")
     else:
-        console.print(f"[bold]CI/CD:[/bold] [yellow]⚠️  未检测到[/yellow]")
+        console.print("[bold]CI/CD:[/bold] [yellow]⚠️  未检测到[/yellow]")
 
     # 命令信息
     cmds = analysis.commands
     if cmds.test or cmds.lint or cmds.format:
-        console.print(f"\n[bold]常用命令:[/bold]")
+        console.print("\n[bold]常用命令:[/bold]")
         for cmd in cmds.test[:1]:
             console.print(f"  测试: [cyan]{cmd}[/cyan]")
         for cmd in cmds.lint[:1]:

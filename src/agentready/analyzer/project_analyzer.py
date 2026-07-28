@@ -1,18 +1,19 @@
 """主分析器 — 协调各子模块，输出完整项目分析结果"""
 
-from pathlib import Path
 from dataclasses import dataclass, field
+from pathlib import Path
 
+from .cmd_extractor import CommandSet, extract_commands
+from .config_scanner import ConfigStatus, scan_existing_configs
+from .dep_parser import DepInfo, parse_dependencies
+from .env_scanner import EnvInfo, scan_environment
 from .lang_detector import detect_languages, get_primary_language
-from .dep_parser import parse_dependencies, DepInfo
-from .cmd_extractor import extract_commands, CommandSet
-from .config_scanner import scan_existing_configs, ConfigStatus
-from .env_scanner import scan_environment, EnvInfo
 
 
 @dataclass
 class ProjectAnalysis:
     """项目分析结果。"""
+
     project_path: Path
     project_name: str
     languages: dict[str, float] = field(default_factory=dict)
@@ -90,12 +91,14 @@ def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysi
         has_tests = True
 
     # 检测 CI
-    has_ci = any((
-        (project_path / ".github" / "workflows").is_dir(),
-        (project_path / ".gitlab-ci.yml").exists(),
-        (project_path / "Jenkinsfile").exists(),
-        (project_path / ".circleci").is_dir(),
-    ))
+    has_ci = any(
+        (
+            (project_path / ".github" / "workflows").is_dir(),
+            (project_path / ".gitlab-ci.yml").exists(),
+            (project_path / "Jenkinsfile").exists(),
+            (project_path / ".circleci").is_dir(),
+        )
+    )
 
     return ProjectAnalysis(
         project_path=project_path,

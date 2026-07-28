@@ -6,8 +6,8 @@ from pathlib import Path
 from agentready.analyzer.project_analyzer import analyze_project
 from agentready.generator.agents_md import AgentsMdGenerator
 from agentready.generator.claude_md import ClaudeMdGenerator
-from agentready.generator.cursorrules import CursorRulesGenerator
 from agentready.generator.copilot import CopilotGenerator
+from agentready.generator.cursorrules import CursorRulesGenerator
 from agentready.generator.mcp_config import McpConfigGenerator
 from agentready.generator.skill_md import SkillMdGenerator
 
@@ -16,14 +16,17 @@ def _make_analysis():
     """创建测试用的分析结果。"""
     tmp = Path(tempfile.mkdtemp())
     (tmp / "main.py").write_text("print('hello')", encoding="utf-8")
-    (tmp / "pyproject.toml").write_text("""[project]
+    (tmp / "pyproject.toml").write_text(
+        """[project]
 name = "test-project"
 dependencies = ["fastapi>=0.100", "uvicorn"]
 [project.optional-dependencies]
 dev = ["pytest"]
 [project.scripts]
 test-app = "app.main:main"
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     (tmp / "tests").mkdir()
     (tmp / "tests" / "test_main.py").write_text("def test_ok(): pass", encoding="utf-8")
     return analyze_project(tmp, scan_env=False)
@@ -109,6 +112,7 @@ def test_generator_write_conflict(tmp_path):
     gen = AgentsMdGenerator(analysis)
     gen.write(tmp_path)
     import pytest
+
     with pytest.raises(FileExistsError):
         gen.write(tmp_path, force=False)
 
@@ -135,6 +139,7 @@ def test_dep_parser_no_scripts():
 def test_template_no_bom():
     """测试模板文件不含 BOM。"""
     from jinja2 import Environment, FileSystemLoader
+
     template_dir = Path(__file__).parent.parent / "src" / "agentready" / "templates"
     env = Environment(loader=FileSystemLoader(str(template_dir)))
     for name in ["agents_md.j2", "claude_md.j2", "cursorrules.j2", "copilot.j2", "mcp_config.j2", "skill_md.j2"]:

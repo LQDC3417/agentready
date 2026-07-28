@@ -1,40 +1,70 @@
 """环境变量扫描器 — 提取开发相关的环境信息"""
 
 import os
-import subprocess
 import platform
+import subprocess
 from dataclasses import dataclass, field
-
 
 # 敏感变量名关键词（包含这些词的变量会被排除）
 SENSITIVE_KEYWORDS = {
-    "key", "token", "secret", "password", "passwd", "credential",
-    "auth", "api_key", "apikey", "access_token", "private",
+    "key",
+    "token",
+    "secret",
+    "password",
+    "passwd",
+    "credential",
+    "auth",
+    "api_key",
+    "apikey",
+    "access_token",
+    "private",
 }
 
 # 开发相关的环境变量名（精确匹配）
 DEV_ENV_VARS = {
-    "PATH", "PYTHONPATH", "PYTHONHOME", "CONDA_PREFIX", "CONDA_DEFAULT_ENV",
-    "JAVA_HOME", "JDK_HOME", "JRE_HOME",
-    "NODE_HOME", "NPM_CONFIG_PREFIX", "NVM_DIR",
-    "GOROOT", "GOPATH", "GOBIN",
-    "CARGO_HOME", "RUSTUP_HOME",
-    "CUDA_HOME", "CUDA_PATH", "CUDNN_PATH",
-    "ANDROID_HOME", "ANDROID_SDK_ROOT",
+    "PATH",
+    "PYTHONPATH",
+    "PYTHONHOME",
+    "CONDA_PREFIX",
+    "CONDA_DEFAULT_ENV",
+    "JAVA_HOME",
+    "JDK_HOME",
+    "JRE_HOME",
+    "NODE_HOME",
+    "NPM_CONFIG_PREFIX",
+    "NVM_DIR",
+    "GOROOT",
+    "GOPATH",
+    "GOBIN",
+    "CARGO_HOME",
+    "RUSTUP_HOME",
+    "CUDA_HOME",
+    "CUDA_PATH",
+    "CUDNN_PATH",
+    "ANDROID_HOME",
+    "ANDROID_SDK_ROOT",
     "DOTNET_ROOT",
     "R_HOME",
     "HOMEBREW_PREFIX",
-    "EDITOR", "VISUAL",
+    "EDITOR",
+    "VISUAL",
     "SHELL",
-    "LANG", "LC_ALL",
+    "LANG",
+    "LC_ALL",
 }
 
 # 开发相关的环境变量前缀
 DEV_ENV_PREFIXES = [
-    "PYENV", "NVM", "RBENV", "SDKMAN",
-    "VCPKG", "CONAN",
-    "npm_config", "PIP_",
-    "VIRTUAL_ENV", "POETRY_VENV",
+    "PYENV",
+    "NVM",
+    "RBENV",
+    "SDKMAN",
+    "VCPKG",
+    "CONAN",
+    "npm_config",
+    "PIP_",
+    "VIRTUAL_ENV",
+    "POETRY_VENV",
 ]
 
 # 工具检测配置: (名称, 命令, 是否用stderr)
@@ -64,6 +94,7 @@ TOOL_CHECKS: list[tuple[str, list[str], bool]] = [
 @dataclass
 class EnvInfo:
     """环境信息汇总。"""
+
     system: str = ""
     arch: str = ""
     shell: str = ""

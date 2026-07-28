@@ -1,7 +1,5 @@
 """依赖解析器测试"""
 
-from pathlib import Path
-
 from agentready.analyzer.dep_parser import parse_dependencies
 
 

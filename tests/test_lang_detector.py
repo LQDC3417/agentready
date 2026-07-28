@@ -1,9 +1,5 @@
 """语言检测器测试"""
 
-from pathlib import Path
-import tempfile
-import os
-
 from agentready.analyzer.lang_detector import detect_languages, get_primary_language
 
 
