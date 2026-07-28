@@ -25,6 +25,7 @@ GENERATOR_MAP = {
 def _load_generator(name: str, analysis):
     """动态加载生成器类。"""
     import importlib
+
     module_path, class_name = GENERATOR_MAP[name]
     module = importlib.import_module(f"agentready.{module_path}")
     cls = getattr(module, class_name)
@@ -83,7 +84,7 @@ def init(path, force, no_env):
             continue
 
         try:
-            result_path = gen.write(project_path, force=force)
+            gen.write(project_path, force=force)
             generated.append(gen.output_filename)
             console.print(f"  [green]✅ 生成 {gen.output_filename}[/green]")
         except Exception as e:
@@ -97,9 +98,7 @@ def init(path, force, no_env):
 
 @main.command()
 @click.argument("path", default=".", type=click.Path(exists=True))
-@click.option("--format", "output_format", default="terminal",
-              type=click.Choice(["terminal", "html"]),
-              help="输出格式")
+@click.option("--format", "output_format", default="terminal", type=click.Choice(["terminal", "html"]), help="输出格式")
 @click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
 def analyze(path, output_format, no_env):
     """分析项目结构并输出健康度报告（不生成文件）。"""
@@ -116,9 +115,13 @@ def analyze(path, output_format, no_env):
 
 @main.command()
 @click.argument("path", default=".", type=click.Path(exists=True))
-@click.option("--type", "file_types", multiple=True,
-              type=click.Choice(["agents", "claude", "cursorrules", "copilot", "mcp", "skill"]),
-              help="要生成的配置文件类型（可多次指定）")
+@click.option(
+    "--type",
+    "file_types",
+    multiple=True,
+    type=click.Choice(["agents", "claude", "cursorrules", "copilot", "mcp", "skill"]),
+    help="要生成的配置文件类型（可多次指定）",
+)
 @click.option("--force", is_flag=True, help="覆盖已有配置文件")
 @click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
 def generate(path, file_types, force, no_env):
@@ -144,7 +147,7 @@ def generate(path, file_types, force, no_env):
             continue
 
         try:
-            result_path = gen.write(project_path, force=force)
+            gen.write(project_path, force=force)
             console.print(f"  [green]✅ 生成 {gen.output_filename}[/green]")
         except Exception as e:
             console.print(f"  [red]❌ 生成 {gen.output_filename} 失败: {e}[/red]")

@@ -1,7 +1,7 @@
 """语言检测器 — 通过文件扩展名统计识别项目主要语言"""
 
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
 
 # 文件扩展名到语言的映射
 EXTENSION_MAP = {
@@ -42,13 +42,29 @@ EXTENSION_MAP = {
 
 # 忽略的目录
 IGNORE_DIRS = {
-    ".git", ".hg", ".svn",
-    "node_modules", "__pycache__", ".venv", "venv", "env",
-    ".tox", ".nox", ".mypy_cache", ".ruff_cache",
-    "dist", "build", "target",
-    ".next", ".nuxt", ".output",
-    "vendor", "third_party", "external",
-    ".idea", ".vscode",
+    ".git",
+    ".hg",
+    ".svn",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "env",
+    ".tox",
+    ".nox",
+    ".mypy_cache",
+    ".ruff_cache",
+    "dist",
+    "build",
+    "target",
+    ".next",
+    ".nuxt",
+    ".output",
+    "vendor",
+    "third_party",
+    "external",
+    ".idea",
+    ".vscode",
 }
 
 
@@ -69,10 +85,7 @@ def detect_languages(project_path: Path, max_depth: int = 10) -> dict[str, float
         return {}
 
     total = sum(counter.values())
-    return {
-        lang: count / total
-        for lang, count in counter.most_common()
-    }
+    return {lang: count / total for lang, count in counter.most_common()}
 
 
 def get_primary_language(project_path: Path) -> str | None:

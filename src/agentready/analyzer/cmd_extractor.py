@@ -1,7 +1,7 @@
 """构建/测试/lint 命令提取器"""
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 
 class CommandSet:
@@ -50,7 +50,7 @@ def _extract_from_pyproject(project_path: Path, cmds: CommandSet):
         return
 
     # 检测测试框架
-    if "pytest" in content or 'testpaths' in content:
+    if "pytest" in content or "testpaths" in content:
         cmds.test.append("pytest")
 
     # 检测 lint 工具
@@ -90,6 +90,7 @@ def _extract_from_package_json(project_path: Path, cmds: CommandSet):
 
     try:
         import json
+
         data = json.loads(filepath.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, OSError, ValueError):
         return

@@ -34,9 +34,7 @@ class BaseGenerator(ABC):
         output_path = project_path / self.output_filename
 
         if output_path.exists() and not force:
-            raise FileExistsError(
-                f"{output_path} 已存在。使用 --force 覆盖。"
-            )
+            raise FileExistsError(f"{output_path} 已存在。使用 --force 覆盖。")
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         content = self.generate()

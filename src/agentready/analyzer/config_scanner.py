@@ -39,24 +39,28 @@ def scan_existing_configs(project_path: Path) -> list[ConfigStatus]:
 
     for filename, config_type in AGENT_CONFIGS.items():
         filepath = project_path / filename
-        results.append(ConfigStatus(
-            name=filename,
-            config_type=config_type,
-            exists=filepath.exists(),
-            path=filepath,
-        ))
+        results.append(
+            ConfigStatus(
+                name=filename,
+                config_type=config_type,
+                exists=filepath.exists(),
+                path=filepath,
+            )
+        )
 
     # 检查 .claude/ 目录下的 skills
     claude_skills_dir = project_path / ".claude" / "skills"
     if claude_skills_dir.is_dir():
         for skill_file in claude_skills_dir.rglob("SKILL.md"):
             rel = skill_file.relative_to(project_path)
-            results.append(ConfigStatus(
-                name=str(rel),
-                config_type="skill_claude",
-                exists=True,
-                path=skill_file,
-            ))
+            results.append(
+                ConfigStatus(
+                    name=str(rel),
+                    config_type="skill_claude",
+                    exists=True,
+                    path=skill_file,
+                )
+            )
 
     return results
 

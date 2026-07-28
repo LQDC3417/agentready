@@ -1,10 +1,10 @@
 """环境变量扫描器测试"""
 
 from agentready.analyzer.env_scanner import (
-    _is_sensitive,
-    _is_dev_related,
-    scan_environment,
     EnvInfo,
+    _is_dev_related,
+    _is_sensitive,
+    scan_environment,
 )
 
 
