@@ -1,0 +1,54 @@
+# {{ project_name }}
+
+> 本文件由 [agentready](https://github.com/user/agentready) 自动生成，请根据项目实际情况调整。
+
+## 项目概述
+
+- **主语言**: {{ primary_language }}{% if languages | length > 1 %}{% for lang, ratio in languages.items() %}{% if not loop.first %}
+- **次要语言**: {{ lang }} ({{ "%.0f" | format(ratio * 100) }}%){% endif %}{% endfor %}{% endif %}
+
+## 技术栈
+
+{% for dep in dependencies %}{% if not dep.dev %}- {{ dep.name }}{% if dep.version_spec %} ({{ dep.version_spec }}){% endif %}
+{% endif %}{% endfor %}
+
+## 开发依赖
+
+{% for dep in dependencies %}{% if dep.dev %}- {{ dep.name }}{% if dep.version_spec %} ({{ dep.version_spec }}){% endif %}
+{% endif %}{% endfor %}
+
+## 常用命令
+
+{% if commands.build %}### 构建
+{% for cmd in commands.build %}```bash
+{{ cmd }}
+```
+{% endfor %}{% endif %}{% if commands.test %}### 测试
+{% for cmd in commands.test %}```bash
+{{ cmd }}
+```
+{% endfor %}{% endif %}{% if commands.lint %}### 代码检查
+{% for cmd in commands.lint %}```bash
+{{ cmd }}
+```
+{% endfor %}{% endif %}{% if commands.format %}### 格式化
+{% for cmd in commands.format %}```bash
+{{ cmd }}
+```
+{% endfor %}{% endif %}
+
+## 目录结构
+
+```
+{{ project_name }}/
+├── src/          # 源代码
+├── tests/        # 测试
+└── ...
+```
+
+## 编码规范
+
+- 代码注释使用中文，变量名和函数名使用英文
+- 遵循项目已有代码风格
+- 修改代码前先理解现有逻辑，保持最小化改动
+- 提交前运行 lint 和测试确保通过
