@@ -59,6 +59,7 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
 
     config_desc = {
         "agents_md": "通用 Agent 指令",
+        "claude_md": "Claude Code 专属指令",
         "cursorrules": "Cursor AI 规则",
         "copilot": "GitHub Copilot 指令",
         "claude_code": "Claude Code 设置",
@@ -76,7 +77,16 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
         desc = config_desc.get(cfg.config_type, "")
         table.add_row(cfg.name, status, desc)
 
-    console.print(); console.print(table)
+    console.print()
+    console.print(table)
+
+    # 开发环境摘要
+    if analysis.env_info.tools:
+        console.print(f"\n[bold]开发环境:[/bold]")
+        for name, version in analysis.env_info.tools[:8]:
+            console.print(f"  {name}: [dim]{version}[/dim]")
+        if len(analysis.env_info.tools) > 8:
+            console.print(f"  ...及其他 {len(analysis.env_info.tools) - 8} 个工具")
 
     # 测试信息
     if analysis.has_tests:
@@ -103,4 +113,3 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
             console.print(f"  格式: [cyan]{cmd}[/cyan]")
 
     console.print()
-

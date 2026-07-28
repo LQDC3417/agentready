@@ -35,7 +35,6 @@ def parse_dependencies(project_path: Path) -> list[DepInfo]:
         if filepath.exists():
             all_deps.extend(parser_fn(filepath))
 
-    # 去重（保留第一个遇到的）
     seen: set[str] = set()
     unique: list[DepInfo] = []
     for dep in all_deps:
@@ -46,41 +45,79 @@ def parse_dependencies(project_path: Path) -> list[DepInfo]:
     return unique
 
 
+def _extract_names_from_value(value: str) -> list[str]:
+    """从 TOML 值中提取包名。
+
+    支持单行: ["fastapi>=0.100", "uvicorn"]
+    和多行情况下的单个值: "fastapi>=0.100"
+    """
+    names: list[str] = []
+    for match in re.finditer(r'"([^"]+)"', value):
+        spec = match.group(1)
+        name = re.split(r"[>=<!~\[]", spec)[0].strip()
+        if name:
+            names.append(name)
+    return names
+
+
 def _parse_pyproject(filepath: Path) -> list[DepInfo]:
-    """解析 pyproject.toml 中的依赖。"""
+    """解析 pyproject.toml 中的依赖。
+
+    支持单行和多行数组格式。
+    """
     deps: list[DepInfo] = []
     try:
         content = filepath.read_text(encoding="utf-8")
     except (UnicodeDecodeError, OSError):
         return deps
 
-    # 简易解析 dependencies 数组
-    in_deps = False
-    in_dev_deps = False
-    for line in content.splitlines():
-        stripped = line.strip()
+    lines = content.splitlines()
+    current_section = ""
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
 
-        if stripped == "dependencies = [":
-            in_deps = True
-            in_dev_deps = False
-            continue
-        if "optional-dependencies" in stripped:
-            in_dev_deps = True
-            in_deps = False
-            continue
-        if stripped == "]":
-            in_deps = False
-            in_dev_deps = False
+        # 检测 section 头
+        if line.startswith("[") and line.endswith("]"):
+            current_section = line[1:-1].strip()
+            i += 1
             continue
 
-        if in_deps or in_dev_deps:
-            # 提取引号中的包名
-            match = re.search(r'"([^"]+)"', stripped)
-            if match:
-                spec = match.group(1)
-                name = re.split(r"[>=<!~\[]", spec)[0].strip()
-                if name:
-                    deps.append(DepInfo(name, dev=in_dev_deps))
+        # 只在 [project] 和 [project.optional-dependencies] 下解析依赖
+        if current_section == "project" and line.startswith("dependencies"):
+            is_dev = False
+        elif current_section == "project.optional-dependencies" and "=" in line:
+            is_dev = True
+        else:
+            i += 1
+            continue
+
+        # 提取 = 右边的值
+        eq_pos = line.index("=")
+        value_part = line[eq_pos + 1:].strip()
+
+        if value_part.startswith("["):
+            if value_part.endswith("]"):
+                # 单行数组: dependencies = ["fastapi", "uvicorn"]
+                names = _extract_names_from_value(value_part)
+                for name in names:
+                    deps.append(DepInfo(name, dev=is_dev))
+            else:
+                # 多行数组: dependencies = [ 后面跟多行
+                # 把 [ 后面的部分也一起处理
+                accumulated = value_part
+                i += 1
+                while i < len(lines):
+                    next_line = lines[i].strip()
+                    accumulated += " " + next_line
+                    if "]" in next_line:
+                        break
+                    i += 1
+                names = _extract_names_from_value(accumulated)
+                for name in names:
+                    deps.append(DepInfo(name, dev=is_dev))
+
+        i += 1
 
     return deps
 
@@ -97,7 +134,6 @@ def _parse_requirements(filepath: Path) -> list[DepInfo]:
         line = line.strip()
         if not line or line.startswith("#") or line.startswith("-"):
             continue
-        # 去除行内注释
         line = line.split("#")[0].strip()
         name = re.split(r"[>=<!~\[]", line)[0].strip()
         if name:
