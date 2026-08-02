@@ -1106,7 +1106,7 @@ Replace `src/repoize/templates/agents_md.j2` with:
 ```jinja
 # {{ project_name }}
 
-> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成，请根据项目实际情况调整。
+> 本文件由 [repoize](https://github.com/LQDC3417/repoize) 自动生成，请根据项目实际情况调整。
 
 ## 项目概述
 
@@ -1193,7 +1193,7 @@ Replace `src/repoize/templates/claude_md.j2` with:
 ```jinja
 # CLAUDE.md — Claude Code 项目指令
 
-> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成。Claude Code 会自动读取此文件。
+> 本文件由 [repoize](https://github.com/LQDC3417/repoize) 自动生成。Claude Code 会自动读取此文件。
 
 ## 项目信息
 
@@ -1321,7 +1321,7 @@ Replace `src/repoize/templates/copilot.j2` with:
 ```jinja
 # {{ project_name }} — Copilot Instructions
 
-> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成。
+> 本文件由 [repoize](https://github.com/LQDC3417/repoize) 自动生成。
 
 ## 项目信息
 

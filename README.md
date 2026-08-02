@@ -6,11 +6,11 @@
 
 ## 安装
 
-> 当前 GitHub 仓库仍命名为 `agentready`，但包名已改为 `repoize`。`repoize` 在 PyPI 上当前可用；本项目尚未发布，请先使用源码安装。
+> 当前 GitHub 仓库已改名为 `repoize`。`repoize` 在 PyPI 上当前可用；本项目尚未发布，请先使用源码安装。
 
 ```bash
-git clone https://github.com/LQDC3417/agentready.git
-cd agentready
+git clone https://github.com/LQDC3417/repoize.git
+cd repoize
 pip install -e ".[dev]"
 ```
 

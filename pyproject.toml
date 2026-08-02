@@ -43,9 +43,9 @@ dev = [
 repoize = "repoize.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/LQDC3417/agentready"
-Repository = "https://github.com/LQDC3417/agentready"
-Issues = "https://github.com/LQDC3417/agentready/issues"
+Homepage = "https://github.com/LQDC3417/repoize"
+Repository = "https://github.com/LQDC3417/repoize"
+Issues = "https://github.com/LQDC3417/repoize/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/repoize"]

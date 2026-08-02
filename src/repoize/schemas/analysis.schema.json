@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/LQDC3417/agentready/schemas/analysis.schema.json",
+  "$id": "https://github.com/LQDC3417/repoize/schemas/analysis.schema.json",
   "title": "Repoize Analysis",
   "type": "object",
   "required": [
