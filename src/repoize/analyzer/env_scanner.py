@@ -102,6 +102,17 @@ class EnvInfo:
     tools: list[tuple[str, str]] = field(default_factory=list)  # (name, version)
     path_entries: list[str] = field(default_factory=list)
 
+    def to_dict(self) -> dict:
+        """返回 JSON 可序列化的环境信息。"""
+        return {
+            "system": self.system,
+            "arch": self.arch,
+            "shell": self.shell,
+            "dev_env_vars": self.dev_env_vars,
+            "tools": [list(item) for item in self.tools],
+            "path_entries": self.path_entries,
+        }
+
 
 def _is_sensitive(name: str) -> bool:
     """判断环境变量是否敏感。"""

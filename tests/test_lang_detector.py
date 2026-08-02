@@ -1,6 +1,6 @@
 """语言检测器测试"""
 
-from agentready.analyzer.lang_detector import detect_languages, get_primary_language
+from repoize.analyzer.lang_detector import detect_languages, get_primary_language
 
 
 def test_detect_python_project(tmp_path):

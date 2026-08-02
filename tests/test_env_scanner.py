@@ -1,6 +1,6 @@
 """环境变量扫描器测试"""
 
-from agentready.analyzer.env_scanner import (
+from repoize.analyzer.env_scanner import (
     EnvInfo,
     _is_dev_related,
     _is_sensitive,

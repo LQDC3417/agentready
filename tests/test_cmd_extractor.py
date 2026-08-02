@@ -1,5 +1,5 @@
-from agentready.analyzer.cmd_extractor import extract_commands
-from agentready.analyzer.language_profiles import get_language_profile
+from repoize.analyzer.cmd_extractor import extract_commands
+from repoize.analyzer.language_profiles import get_language_profile
 
 
 def test_go_profile_fills_default_commands(tmp_path):

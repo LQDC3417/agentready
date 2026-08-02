@@ -1,17 +1,18 @@
 """生成器测试"""
 
+import json
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from agentready.analyzer.project_analyzer import analyze_project
-from agentready.generator.agents_md import AgentsMdGenerator
-from agentready.generator.claude_md import ClaudeMdGenerator
-from agentready.generator.copilot import CopilotGenerator
-from agentready.generator.cursorrules import CursorRulesGenerator
-from agentready.generator.mcp_config import McpConfigGenerator
-from agentready.generator.skill_md import SkillMdGenerator
+from repoize.analyzer.project_analyzer import analyze_project
+from repoize.generator.agents_md import AgentsMdGenerator
+from repoize.generator.claude_md import ClaudeMdGenerator
+from repoize.generator.copilot import CopilotGenerator
+from repoize.generator.cursorrules import CursorRulesGenerator
+from repoize.generator.mcp_config import McpConfigGenerator
+from repoize.generator.skill_md import SkillMdGenerator
 
 
 def _make_analysis():
@@ -141,7 +142,7 @@ def test_template_no_bom():
     """测试模板文件不含 BOM。"""
     from jinja2 import Environment, FileSystemLoader
 
-    template_dir = Path(__file__).parent.parent / "src" / "agentready" / "templates"
+    template_dir = Path(__file__).parent.parent / "src" / "repoize" / "templates"
     env = Environment(loader=FileSystemLoader(str(template_dir)))
     for name in ["agents_md.j2", "claude_md.j2", "cursorrules.j2", "copilot.j2", "mcp_config.j2", "skill_md.j2"]:
         source, _, _ = env.loader.get_source(env, name)
@@ -197,3 +198,57 @@ def test_mcp_config_is_generic_for_non_python():
     content = McpConfigGenerator(analysis).generate()
     assert "mcpServers" in content
     assert "filesystem" in content
+
+
+def test_generator_write_adds_markers(tmp_path):
+    """测试文本生成文件包含 managed marker。"""
+    analysis = _make_analysis()
+    output_path = AgentsMdGenerator(analysis).write(tmp_path)
+    content = output_path.read_text(encoding="utf-8")
+    assert "<!-- repoize:generated-start -->" in content
+    assert "<!-- repoize:generated-end -->" in content
+
+
+def test_generator_update_preserves_manual_content(tmp_path):
+    """测试增量更新保留 marker 外的手写内容。"""
+    analysis = _make_analysis()
+    gen = AgentsMdGenerator(analysis)
+    output_path = gen.write(tmp_path)
+    manual = "\n# 手写内容\n"
+    output_path.write_text(output_path.read_text(encoding="utf-8") + manual, encoding="utf-8")
+
+    gen.update(tmp_path)
+
+    content = output_path.read_text(encoding="utf-8")
+    assert manual in content
+    assert "pytest" in content
+
+
+def test_generator_update_without_markers_skips(tmp_path):
+    """测试没有 managed marker 的已有文件不会被覆盖。"""
+    analysis = _make_analysis()
+    output_path = tmp_path / "AGENTS.md"
+    output_path.write_text("# 用户文件", encoding="utf-8")
+
+    result = AgentsMdGenerator(analysis).update(tmp_path)
+
+    assert result is None
+    assert output_path.read_text(encoding="utf-8") == "# 用户文件"
+
+
+def test_mcp_update_preserves_extra_servers(tmp_path):
+    """测试 JSON 更新保留用户自定义 MCP server。"""
+    analysis = _make_analysis()
+    output_path = tmp_path / ".claude" / "mcp.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps({"mcpServers": {"custom": {"command": "echo", "args": []}}}),
+        encoding="utf-8",
+    )
+
+    McpConfigGenerator(analysis).update(tmp_path)
+
+    data = json.loads(output_path.read_text(encoding="utf-8"))
+    assert "custom" in data["mcpServers"]
+    assert "git" in data["mcpServers"]
+    assert "filesystem" in data["mcpServers"]

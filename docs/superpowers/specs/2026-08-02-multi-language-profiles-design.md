@@ -2,11 +2,11 @@
 
 - 日期：2026-08-02
 - 状态：待用户审查
-- 项目：agentready
+- 项目：repoize
 
 ## 1. 背景
 
-当前 `agentready` 的完整能力集中在 Python 项目：
+当前 `repoize` 的完整能力集中在 Python 项目：
 
 - 语言检测支持 30+ 种语言。
 - 依赖解析和命令提取只完整覆盖 Python、JS/TS、Go、Rust。
@@ -47,7 +47,7 @@ Analyzer 负责收集项目事实，profile 负责提供语言默认知识，模
 
 ## 5. LanguageProfile 数据模型
 
-新增文件：`src/agentready/analyzer/language_profiles.py`
+新增文件：`src/repoize/analyzer/language_profiles.py`
 
 ```python
 @dataclass
@@ -78,7 +78,7 @@ def get_language_profile(language: str | None) -> LanguageProfile | None:
 
 ## 6. Analyzer 集成
 
-修改文件：`src/agentready/analyzer/project_analyzer.py`
+修改文件：`src/repoize/analyzer/project_analyzer.py`
 
 `ProjectAnalysis` 增加字段：
 
@@ -103,7 +103,7 @@ frameworks: list[str]
 
 ## 7. Manifest 与依赖解析
 
-修改文件：`src/agentready/analyzer/dep_parser.py`
+修改文件：`src/repoize/analyzer/dep_parser.py`
 
 | 语言 | Manifest | 解析方式 |
 |------|----------|----------|
@@ -117,7 +117,7 @@ frameworks: list[str]
 
 ## 8. 默认命令
 
-修改文件：`src/agentready/analyzer/cmd_extractor.py`
+修改文件：`src/repoize/analyzer/cmd_extractor.py`
 
 | 语言 | Setup | Build | Test | Lint | Format |
 |------|-------|-------|------|------|--------|
@@ -153,12 +153,12 @@ frameworks: list[str]
 
 修改 6 个模板文件，并为所有生成器传入 `profile` 和 `frameworks`：
 
-- `src/agentready/templates/agents_md.j2`
-- `src/agentready/templates/claude_md.j2`
-- `src/agentready/templates/cursorrules.j2`
-- `src/agentready/templates/copilot.j2`
-- `src/agentready/templates/skill_md.j2`
-- `src/agentready/templates/mcp_config.j2`
+- `src/repoize/templates/agents_md.j2`
+- `src/repoize/templates/claude_md.j2`
+- `src/repoize/templates/cursorrules.j2`
+- `src/repoize/templates/copilot.j2`
+- `src/repoize/templates/skill_md.j2`
+- `src/repoize/templates/mcp_config.j2`
 
 同时修改 6 个生成器文件，把 `profile` 和 `frameworks` 传给模板。
 
@@ -198,7 +198,7 @@ tests/fixtures/languages/
 - `ruff check src/ tests/` 通过。
 - `ruff format --check src/ tests/` 通过。
 - 现有 Python 测试继续通过。
-- 对 JS/Go/Rust fixture 手动运行 `agentready analyze` 和 `agentready init`，结果语言正确。
+- 对 JS/Go/Rust fixture 手动运行 `repoize analyze` 和 `repoize init`，结果语言正确。
 
 ## 13. 风险与假设
 

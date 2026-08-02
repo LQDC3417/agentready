@@ -1,7 +1,7 @@
 """依赖解析器测试"""
 
-from agentready.analyzer.dep_parser import parse_dependencies
-from agentready.analyzer.language_profiles import get_language_profile
+from repoize.analyzer.dep_parser import parse_dependencies
+from repoize.analyzer.language_profiles import get_language_profile
 
 
 def test_parse_pyproject(tmp_path):

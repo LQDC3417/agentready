@@ -1,6 +1,6 @@
 # git_proj — Copilot Instructions
 
-> 本文件由 [agentready](https://github.com/user/agentready) 自动生成。
+> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成。
 
 ## 项目信息
 

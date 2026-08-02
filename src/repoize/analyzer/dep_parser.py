@@ -19,6 +19,14 @@ class DepInfo:
         suffix = " (dev)" if self.dev else ""
         return f"DepInfo({self.name}{suffix})"
 
+    def to_dict(self) -> dict:
+        """返回 JSON 可序列化的依赖信息。"""
+        return {
+            "name": self.name,
+            "version_spec": self.version_spec,
+            "dev": self.dev,
+        }
+
 
 def parse_dependencies(
     project_path: Path,

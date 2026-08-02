@@ -1,6 +1,6 @@
 # git_proj
 
-> 本文件由 [agentready](https://github.com/LQDC3417/agentready) 自动生成，请根据项目实际情况调整。
+> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成，请根据项目实际情况调整。
 
 ## 项目概述
 

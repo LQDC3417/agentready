@@ -57,6 +57,27 @@ class ProjectAnalysis:
             return "部分就绪"
         return "未配置"
 
+    def to_dict(self) -> dict:
+        """返回 JSON 可序列化的项目分析结果。"""
+        return {
+            "schema_version": 1,
+            "project_name": self.project_name,
+            "project_path": str(self.project_path),
+            "primary_language": self.primary_language,
+            "languages": self.languages,
+            "profile": self.profile.name if self.profile else None,
+            "frameworks": self.frameworks,
+            "dependencies": [dep.to_dict() for dep in self.dependencies],
+            "commands": self.commands.to_dict(),
+            "existing_configs": [cfg.to_dict() for cfg in self.existing_configs],
+            "env_info": self.env_info.to_dict(),
+            "has_tests": self.has_tests,
+            "test_framework": self.test_framework,
+            "has_ci": self.has_ci,
+            "agent_ready_score": self.agent_ready_score,
+            "agent_ready_label": self.agent_ready_label,
+        }
+
 
 def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysis:
     """执行完整的项目分析。

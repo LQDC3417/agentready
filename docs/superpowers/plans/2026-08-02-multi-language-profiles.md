@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 让 agentready 通过 language profile 支持 JS/TS、Go、Rust、Java、Ruby、PHP 的基础分析和配置生成。
+**Goal:** 让 repoize 通过 language profile 支持 JS/TS、Go、Rust、Java、Ruby、PHP 的基础分析和配置生成。
 
 **Architecture:** 新增 language profile 注册表，Analyzer 输出 profile 和 frameworks，所有生成器把这两项传给 Jinja2 模板，模板据此渲染语言正确的安装和命令。
 
@@ -18,7 +18,7 @@
 
 新增文件：
 
-- `src/agentready/analyzer/language_profiles.py`
+- `src/repoize/analyzer/language_profiles.py`
 - `tests/test_language_profiles.py`
 - `tests/test_cmd_extractor.py`
 - `tests/fixtures/languages/javascript/package.json`
@@ -32,22 +32,22 @@
 
 修改文件：
 
-- `src/agentready/analyzer/dep_parser.py`
-- `src/agentready/analyzer/cmd_extractor.py`
-- `src/agentready/analyzer/project_analyzer.py`
-- `src/agentready/generator/agents_md.py`
-- `src/agentready/generator/claude_md.py`
-- `src/agentready/generator/cursorrules.py`
-- `src/agentready/generator/copilot.py`
-- `src/agentready/generator/mcp_config.py`
-- `src/agentready/generator/skill_md.py`
-- `src/agentready/reporter/health_report.py`
-- `src/agentready/templates/agents_md.j2`
-- `src/agentready/templates/claude_md.j2`
-- `src/agentready/templates/cursorrules.j2`
-- `src/agentready/templates/copilot.j2`
-- `src/agentready/templates/mcp_config.j2`
-- `src/agentready/templates/skill_md.j2`
+- `src/repoize/analyzer/dep_parser.py`
+- `src/repoize/analyzer/cmd_extractor.py`
+- `src/repoize/analyzer/project_analyzer.py`
+- `src/repoize/generator/agents_md.py`
+- `src/repoize/generator/claude_md.py`
+- `src/repoize/generator/cursorrules.py`
+- `src/repoize/generator/copilot.py`
+- `src/repoize/generator/mcp_config.py`
+- `src/repoize/generator/skill_md.py`
+- `src/repoize/reporter/health_report.py`
+- `src/repoize/templates/agents_md.j2`
+- `src/repoize/templates/claude_md.j2`
+- `src/repoize/templates/cursorrules.j2`
+- `src/repoize/templates/copilot.j2`
+- `src/repoize/templates/mcp_config.j2`
+- `src/repoize/templates/skill_md.j2`
 - `tests/test_dep_parser.py`
 - `tests/test_generators.py`
 - `tests/test_analyzer.py`
@@ -57,7 +57,7 @@
 ### Task 1: Language Profile 注册表
 
 **Files:**
-- Create: `src/agentready/analyzer/language_profiles.py`
+- Create: `src/repoize/analyzer/language_profiles.py`
 - Test: `tests/test_language_profiles.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -65,8 +65,8 @@
 Create `tests/test_language_profiles.py`:
 
 ```python
-from agentready.analyzer.dep_parser import DepInfo
-from agentready.analyzer.language_profiles import detect_frameworks, get_language_profile
+from repoize.analyzer.dep_parser import DepInfo
+from repoize.analyzer.language_profiles import detect_frameworks, get_language_profile
 
 
 def test_get_language_profile_go():
@@ -96,11 +96,11 @@ def test_detect_frameworks_empty():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `python -m pytest tests/test_language_profiles.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'agentready.analyzer.language_profiles'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'repoize.analyzer.language_profiles'`
 
 - [ ] **Step 3: Create the profile module**
 
-Create `src/agentready/analyzer/language_profiles.py`:
+Create `src/repoize/analyzer/language_profiles.py`:
 
 ```python
 """语言画像注册表：为多语言分析、命令提取和模板渲染提供默认知识。"""
@@ -246,7 +246,7 @@ Expected: PASS
 - [ ] **Step 5: Commit after user confirmation**
 
 ```bash
-git add src/agentready/analyzer/language_profiles.py tests/test_language_profiles.py
+git add src/repoize/analyzer/language_profiles.py tests/test_language_profiles.py
 git commit -m "feat: add language profile registry"
 ```
 
@@ -255,7 +255,7 @@ git commit -m "feat: add language profile registry"
 ### Task 2: 扩展依赖解析器
 
 **Files:**
-- Modify: `src/agentready/analyzer/dep_parser.py`
+- Modify: `src/repoize/analyzer/dep_parser.py`
 - Test: `tests/test_dep_parser.py`
 
 - [ ] **Step 1: Add failing parser tests**
@@ -263,7 +263,7 @@ git commit -m "feat: add language profile registry"
 Append to `tests/test_dep_parser.py`:
 
 ```python
-from agentready.analyzer.language_profiles import get_language_profile
+from repoize.analyzer.language_profiles import get_language_profile
 
 
 def test_parse_pom_xml(tmp_path):
@@ -338,7 +338,7 @@ Expected: FAIL on `_parse_pom_xml` and `_parse_gradle_build` undefined
 
 - [ ] **Step 3: Add profile-aware parsing**
 
-Modify `parse_dependencies` in `src/agentready/analyzer/dep_parser.py`:
+Modify `parse_dependencies` in `src/repoize/analyzer/dep_parser.py`:
 
 ```python
 def parse_dependencies(
@@ -490,7 +490,7 @@ def _parse_composer_json(filepath: Path) -> list[DepInfo]:
     return deps
 ```
 
-Update the import line in `src/agentready/analyzer/dep_parser.py`:
+Update the import line in `src/repoize/analyzer/dep_parser.py`:
 
 ```python
 from typing import Callable
@@ -506,7 +506,7 @@ Expected: PASS
 - [ ] **Step 5: Commit after user confirmation**
 
 ```bash
-git add src/agentready/analyzer/dep_parser.py tests/test_dep_parser.py
+git add src/repoize/analyzer/dep_parser.py tests/test_dep_parser.py
 git commit -m "feat: parse Java Ruby PHP manifests"
 ```
 
@@ -515,7 +515,7 @@ git commit -m "feat: parse Java Ruby PHP manifests"
 ### Task 3: 命令提取器支持 profile
 
 **Files:**
-- Modify: `src/agentready/analyzer/cmd_extractor.py`
+- Modify: `src/repoize/analyzer/cmd_extractor.py`
 - Test: `tests/test_cmd_extractor.py`
 
 - [ ] **Step 1: Add failing command tests**
@@ -523,8 +523,8 @@ git commit -m "feat: parse Java Ruby PHP manifests"
 Create `tests/test_cmd_extractor.py`:
 
 ```python
-from agentready.analyzer.cmd_extractor import extract_commands
-from agentready.analyzer.language_profiles import get_language_profile
+from repoize.analyzer.cmd_extractor import extract_commands
+from repoize.analyzer.language_profiles import get_language_profile
 
 
 def test_go_profile_fills_default_commands(tmp_path):
@@ -578,7 +578,7 @@ Expected: FAIL because `extract_commands` has no `profile` parameter
 
 - [ ] **Step 3: Implement profile defaults and language extraction**
 
-Modify `extract_commands` in `src/agentready/analyzer/cmd_extractor.py`:
+Modify `extract_commands` in `src/repoize/analyzer/cmd_extractor.py`:
 
 ```python
 def extract_commands(
@@ -682,7 +682,7 @@ Expected: PASS
 - [ ] **Step 5: Commit after user confirmation**
 
 ```bash
-git add src/agentready/analyzer/cmd_extractor.py tests/test_cmd_extractor.py
+git add src/repoize/analyzer/cmd_extractor.py tests/test_cmd_extractor.py
 git commit -m "feat: add profile-aware command extraction"
 ```
 
@@ -691,7 +691,7 @@ git commit -m "feat: add profile-aware command extraction"
 ### Task 4: Analyzer 输出 profile 和 frameworks
 
 **Files:**
-- Modify: `src/agentready/analyzer/project_analyzer.py`
+- Modify: `src/repoize/analyzer/project_analyzer.py`
 - Test: `tests/test_analyzer.py`
 
 - [ ] **Step 1: Add failing analyzer tests**
@@ -730,7 +730,7 @@ Expected: FAIL with `AttributeError: 'ProjectAnalysis' object has no attribute '
 
 - [ ] **Step 3: Extend ProjectAnalysis and analyze_project**
 
-Modify imports in `src/agentready/analyzer/project_analyzer.py`:
+Modify imports in `src/repoize/analyzer/project_analyzer.py`:
 
 ```python
 from .language_profiles import LanguageProfile, detect_frameworks, get_language_profile
@@ -770,7 +770,7 @@ Expected: PASS
 - [ ] **Step 5: Commit after user confirmation**
 
 ```bash
-git add src/agentready/analyzer/project_analyzer.py tests/test_analyzer.py
+git add src/repoize/analyzer/project_analyzer.py tests/test_analyzer.py
 git commit -m "feat: expose language profile and frameworks from analyzer"
 ```
 
@@ -924,16 +924,16 @@ git commit -m "test: add multi-language fixtures"
 ### Task 6: 生成器传入 profile 和 frameworks
 
 **Files:**
-- Modify: `src/agentready/generator/agents_md.py`
-- Modify: `src/agentready/generator/claude_md.py`
-- Modify: `src/agentready/generator/cursorrules.py`
-- Modify: `src/agentready/generator/copilot.py`
-- Modify: `src/agentready/generator/mcp_config.py`
-- Modify: `src/agentready/generator/skill_md.py`
+- Modify: `src/repoize/generator/agents_md.py`
+- Modify: `src/repoize/generator/claude_md.py`
+- Modify: `src/repoize/generator/cursorrules.py`
+- Modify: `src/repoize/generator/copilot.py`
+- Modify: `src/repoize/generator/mcp_config.py`
+- Modify: `src/repoize/generator/skill_md.py`
 
 - [ ] **Step 1: Add profile/frameworks to every render call**
 
-`src/agentready/generator/agents_md.py`:
+`src/repoize/generator/agents_md.py`:
 
 ```python
         return template.render(
@@ -948,7 +948,7 @@ git commit -m "test: add multi-language fixtures"
         )
 ```
 
-`src/agentready/generator/claude_md.py`:
+`src/repoize/generator/claude_md.py`:
 
 ```python
         return template.render(
@@ -963,7 +963,7 @@ git commit -m "test: add multi-language fixtures"
         )
 ```
 
-`src/agentready/generator/cursorrules.py`:
+`src/repoize/generator/cursorrules.py`:
 
 ```python
         return template.render(
@@ -976,7 +976,7 @@ git commit -m "test: add multi-language fixtures"
         )
 ```
 
-`src/agentready/generator/copilot.py`:
+`src/repoize/generator/copilot.py`:
 
 ```python
         return template.render(
@@ -988,7 +988,7 @@ git commit -m "test: add multi-language fixtures"
         )
 ```
 
-`src/agentready/generator/mcp_config.py`:
+`src/repoize/generator/mcp_config.py`:
 
 ```python
         return template.render(
@@ -1000,7 +1000,7 @@ git commit -m "test: add multi-language fixtures"
         )
 ```
 
-`src/agentready/generator/skill_md.py`:
+`src/repoize/generator/skill_md.py`:
 
 ```python
         return template.render(
@@ -1021,7 +1021,7 @@ Expected: PASS
 - [ ] **Step 3: Commit after user confirmation**
 
 ```bash
-git add src/agentready/generator
+git add src/repoize/generator
 git commit -m "feat: pass profile data to generators"
 ```
 
@@ -1030,12 +1030,12 @@ git commit -m "feat: pass profile data to generators"
 ### Task 7: 模板改为 profile 驱动
 
 **Files:**
-- Modify: `src/agentready/templates/agents_md.j2`
-- Modify: `src/agentready/templates/claude_md.j2`
-- Modify: `src/agentready/templates/cursorrules.j2`
-- Modify: `src/agentready/templates/copilot.j2`
-- Modify: `src/agentready/templates/mcp_config.j2`
-- Modify: `src/agentready/templates/skill_md.j2`
+- Modify: `src/repoize/templates/agents_md.j2`
+- Modify: `src/repoize/templates/claude_md.j2`
+- Modify: `src/repoize/templates/cursorrules.j2`
+- Modify: `src/repoize/templates/copilot.j2`
+- Modify: `src/repoize/templates/mcp_config.j2`
+- Modify: `src/repoize/templates/skill_md.j2`
 - Test: `tests/test_generators.py`
 
 - [ ] **Step 1: Add fixture-driven generator tests**
@@ -1101,12 +1101,12 @@ Expected: FAIL on fixture-driven tests because templates are still Python-only
 
 - [ ] **Step 3: Replace `agents_md.j2`**
 
-Replace `src/agentready/templates/agents_md.j2` with:
+Replace `src/repoize/templates/agents_md.j2` with:
 
 ```jinja
 # {{ project_name }}
 
-> 本文件由 [agentready](https://github.com/LQDC3417/agentready) 自动生成，请根据项目实际情况调整。
+> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成，请根据项目实际情况调整。
 
 ## 项目概述
 
@@ -1188,12 +1188,12 @@ Replace `src/agentready/templates/agents_md.j2` with:
 
 - [ ] **Step 4: Replace `claude_md.j2`**
 
-Replace `src/agentready/templates/claude_md.j2` with:
+Replace `src/repoize/templates/claude_md.j2` with:
 
 ```jinja
 # CLAUDE.md — Claude Code 项目指令
 
-> 本文件由 [agentready](https://github.com/LQDC3417/agentready) 自动生成。Claude Code 会自动读取此文件。
+> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成。Claude Code 会自动读取此文件。
 
 ## 项目信息
 
@@ -1277,7 +1277,7 @@ Replace `src/agentready/templates/claude_md.j2` with:
 
 - [ ] **Step 5: Replace `cursorrules.j2`**
 
-Replace `src/agentready/templates/cursorrules.j2` with:
+Replace `src/repoize/templates/cursorrules.j2` with:
 
 ```jinja
 # {{ project_name }} — Cursor Rules
@@ -1316,12 +1316,12 @@ Replace `src/agentready/templates/cursorrules.j2` with:
 
 - [ ] **Step 6: Replace `copilot.j2`**
 
-Replace `src/agentready/templates/copilot.j2` with:
+Replace `src/repoize/templates/copilot.j2` with:
 
 ```jinja
 # {{ project_name }} — Copilot Instructions
 
-> 本文件由 [agentready](https://github.com/LQDC3417/agentready) 自动生成。
+> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成。
 
 ## 项目信息
 
@@ -1356,7 +1356,7 @@ Replace `src/agentready/templates/copilot.j2` with:
 
 - [ ] **Step 7: Replace `skill_md.j2`**
 
-Replace `src/agentready/templates/skill_md.j2` with:
+Replace `src/repoize/templates/skill_md.j2` with:
 
 ```jinja
 ---
@@ -1406,7 +1406,7 @@ license: MIT
 
 - [ ] **Step 8: Replace `mcp_config.j2`**
 
-Replace `src/agentready/templates/mcp_config.j2` with:
+Replace `src/repoize/templates/mcp_config.j2` with:
 
 ```json
 {
@@ -1431,7 +1431,7 @@ Expected: PASS
 - [ ] **Step 10: Commit after user confirmation**
 
 ```bash
-git add src/agentready/templates tests/test_generators.py
+git add src/repoize/templates tests/test_generators.py
 git commit -m "feat: render language-aware agent configs"
 ```
 
@@ -1440,7 +1440,7 @@ git commit -m "feat: render language-aware agent configs"
 ### Task 8: 健康报告显示 profile 和框架
 
 **Files:**
-- Modify: `src/agentready/reporter/health_report.py`
+- Modify: `src/repoize/reporter/health_report.py`
 
 - [ ] **Step 1: Add profile/framework lines**
 
@@ -1463,8 +1463,8 @@ Expected: PASS
 Run:
 
 ```powershell
-python -m agentready.cli analyze tests/fixtures/languages/go --no-env
-python -m agentready.cli analyze tests/fixtures/languages/php --no-env
+python -m repoize.cli analyze tests/fixtures/languages/go --no-env
+python -m repoize.cli analyze tests/fixtures/languages/php --no-env
 ```
 
 Expected: output contains `语言画像: Go` / `语言画像: PHP`, and PHP 项目显示 `框架: laravel`
@@ -1472,7 +1472,7 @@ Expected: output contains `语言画像: Go` / `语言画像: PHP`, and PHP 项�
 - [ ] **Step 4: Commit after user confirmation**
 
 ```bash
-git add src/agentready/reporter/health_report.py
+git add src/repoize/reporter/health_report.py
 git commit -m "feat: show language profile in health report"
 ```
 

@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LQDC3417/agentready/schemas/analysis.schema.json",
+  "title": "Repoize Analysis",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project_name",
+    "project_path",
+    "primary_language",
+    "languages",
+    "profile",
+    "frameworks",
+    "dependencies",
+    "commands",
+    "existing_configs",
+    "env_info",
+    "has_tests",
+    "test_framework",
+    "has_ci",
+    "agent_ready_score",
+    "agent_ready_label"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project_name": {
+      "type": "string"
+    },
+    "project_path": {
+      "type": "string"
+    },
+    "primary_language": {
+      "type": ["string", "null"]
+    },
+    "languages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "profile": {
+      "type": ["string", "null"]
+    },
+    "frameworks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dependency"
+      }
+    },
+    "commands": {
+      "$ref": "#/$defs/commands"
+    },
+    "existing_configs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/config_status"
+      }
+    },
+    "env_info": {
+      "$ref": "#/$defs/env_info"
+    },
+    "has_tests": {
+      "type": "boolean"
+    },
+    "test_framework": {
+      "type": ["string", "null"]
+    },
+    "has_ci": {
+      "type": "boolean"
+    },
+    "agent_ready_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "agent_ready_label": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "dependency": {
+      "type": "object",
+      "required": ["name", "version_spec", "dev"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version_spec": {
+          "type": "string"
+        },
+        "dev": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "commands": {
+      "type": "object",
+      "required": ["build", "test", "lint", "format", "run"],
+      "properties": {
+        "build": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "test": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lint": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "format": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "run": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "config_status": {
+      "type": "object",
+      "required": ["name", "config_type", "exists", "path"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "config_type": {
+          "type": "string"
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "env_info": {
+      "type": "object",
+      "required": ["system", "arch", "shell", "dev_env_vars", "tools", "path_entries"],
+      "properties": {
+        "system": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        },
+        "shell": {
+          "type": "string"
+        },
+        "dev_env_vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 2
+          }
+        },
+        "path_entries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

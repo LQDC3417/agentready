@@ -1,6 +1,6 @@
 # CLAUDE.md — Claude Code 项目指令
 
-> 本文件由 [agentready](https://github.com/LQDC3417/agentready) 自动生成。Claude Code 会自动读取此文件。
+> 本文件由 [repoize](https://github.com/LQDC3417/agentready) 自动生成。Claude Code 会自动读取此文件。
 
 ## 项目信息
 

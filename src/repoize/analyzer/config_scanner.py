@@ -31,6 +31,15 @@ class ConfigStatus:
         status = "✅" if self.exists else "❌"
         return f"{status} {self.name}"
 
+    def to_dict(self) -> dict:
+        """返回 JSON 可序列化的配置状态。"""
+        return {
+            "name": self.name,
+            "config_type": self.config_type,
+            "exists": self.exists,
+            "path": str(self.path),
+        }
+
 
 def scan_existing_configs(project_path: Path) -> list[ConfigStatus]:
     """扫描项目中已有的 Agent 配置文件。"""

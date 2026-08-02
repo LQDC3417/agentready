@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agentready"
+name = "repoize"
 version = "0.1.0"
 description = "一条命令让任何项目对 AI Agent 友好 — 自动生成 AGENTS.md、.cursorrules、MCP 配置、Skill 文件"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    { name = "agentready contributors" },
+    { name = "repoize contributors" },
 ]
 keywords = ["ai", "agent", "cli", "developer-tools", "mcp", "claude-code", "cursor", "copilot"]
 classifiers = [
@@ -28,6 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.0",
+    "jsonschema>=4.0",
     "rich>=13.0",
     "jinja2>=3.1",
 ]
@@ -39,7 +40,7 @@ dev = [
 ]
 
 [project.scripts]
-agentready = "agentready.cli:main"
+repoize = "repoize.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/LQDC3417/agentready"
@@ -47,7 +48,7 @@ Repository = "https://github.com/LQDC3417/agentready"
 Issues = "https://github.com/LQDC3417/agentready/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agentready"]
+packages = ["src/repoize"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -73,4 +74,4 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["agentready"]
+known-first-party = ["repoize"]

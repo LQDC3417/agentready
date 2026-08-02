@@ -1,5 +1,5 @@
-from agentready.analyzer.dep_parser import DepInfo
-from agentready.analyzer.language_profiles import detect_frameworks, get_language_profile
+from repoize.analyzer.dep_parser import DepInfo
+from repoize.analyzer.language_profiles import detect_frameworks, get_language_profile
 
 
 def test_get_language_profile_go():

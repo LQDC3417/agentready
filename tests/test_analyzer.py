@@ -3,8 +3,8 @@
 import tempfile
 from pathlib import Path
 
-from agentready.analyzer.config_scanner import scan_existing_configs
-from agentready.analyzer.project_analyzer import analyze_project
+from repoize.analyzer.config_scanner import scan_existing_configs
+from repoize.analyzer.project_analyzer import analyze_project
 
 
 def test_analyze_with_env():
