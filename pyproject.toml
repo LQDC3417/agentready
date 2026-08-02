@@ -42,9 +42,9 @@ dev = [
 agentready = "agentready.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/user/agentready"
-Repository = "https://github.com/user/agentready"
-Issues = "https://github.com/user/agentready/issues"
+Homepage = "https://github.com/LQDC3417/agentready"
+Repository = "https://github.com/LQDC3417/agentready"
+Issues = "https://github.com/LQDC3417/agentready/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agentready"]

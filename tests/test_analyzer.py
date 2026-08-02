@@ -67,3 +67,27 @@ def test_analyze_with_ci(tmp_path):
     (workflows / "ci.yml").write_text("name: CI", encoding="utf-8")
     analysis = analyze_project(tmp_path, scan_env=False)
     assert analysis.has_ci is True
+
+
+def test_analyze_go_profile(tmp_path):
+    """测试 Go 项目匹配 profile 并提取命令。"""
+    (tmp_path / "go.mod").write_text("module example.com/foo\n\ngo 1.22\n", encoding="utf-8")
+    (tmp_path / "main.go").write_text("package main\n", encoding="utf-8")
+    analysis = analyze_project(tmp_path, scan_env=False)
+    assert analysis.primary_language == "Go"
+    assert analysis.profile is not None
+    assert "go test ./..." in analysis.commands.test
+
+
+def test_analyze_frameworks(tmp_path):
+    """测试框架识别写入分析结果。"""
+    content = """{
+  "dependencies": {
+    "express": "^4.19.0"
+  }
+}
+"""
+    (tmp_path / "package.json").write_text(content, encoding="utf-8")
+    (tmp_path / "index.js").write_text("console.log('hi')", encoding="utf-8")
+    analysis = analyze_project(tmp_path, scan_env=False)
+    assert analysis.frameworks == ["express"]

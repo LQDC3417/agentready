@@ -3,10 +3,10 @@
     "git": {
       "command": "uvx",
       "args": ["mcp-server-git", "--repository", "{{ project_path }}"]
-    }{% if primary_language == "Python" %},
+    },
     "filesystem": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "{{ project_path }}"]
-    }{% endif %}
+    }
   }
 }

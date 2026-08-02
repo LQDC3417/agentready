@@ -5,13 +5,27 @@
 ## 项目信息
 
 - 项目名: {{ project_name }}
-- 主语言: {{ primary_language }}{% if languages | length > 1 %}{% for lang, ratio in languages.items() %}{% if not loop.first %}
+- 主语言: {{ primary_language }}{% if profile %}
+- 语言画像: {{ profile.name }}{% endif %}{% if languages | length > 1 %}{% for lang, ratio in languages.items() %}{% if not loop.first %}
 - 次要语言: {{ lang }} ({{ "%.0f" | format(ratio * 100) }}%){% endif %}{% endfor %}{% endif %}
 
 ## 技术栈
 
+{% if frameworks %}### 框架
+{% for framework in frameworks %}- {{ framework }}
+{% endfor %}{% endif %}
+
+### 依赖
+
 {% for dep in dependencies %}{% if not dep.dev %}- {{ dep.name }}{% if dep.version_spec %} ({{ dep.version_spec }}){% endif %}
 {% endif %}{% endfor %}
+
+{% if profile and profile.setup_commands %}## 快速开始
+
+{% for cmd in profile.setup_commands %}```bash
+{{ cmd }}
+```
+{% endfor %}{% endif %}
 
 {% if commands.build %}## 构建
 {% for cmd in commands.build %}```bash

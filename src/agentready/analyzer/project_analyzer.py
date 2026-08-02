@@ -8,6 +8,7 @@ from .config_scanner import ConfigStatus, scan_existing_configs
 from .dep_parser import DepInfo, parse_dependencies
 from .env_scanner import EnvInfo, scan_environment
 from .lang_detector import detect_languages, get_primary_language
+from .language_profiles import LanguageProfile, detect_frameworks, get_language_profile
 
 
 @dataclass
@@ -25,6 +26,8 @@ class ProjectAnalysis:
     has_tests: bool = False
     test_framework: str | None = None
     has_ci: bool = False
+    profile: LanguageProfile | None = None
+    frameworks: list[str] = field(default_factory=list)
 
     @property
     def agent_ready_score(self) -> int:
@@ -66,9 +69,11 @@ def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysi
 
     languages = detect_languages(project_path)
     primary = get_primary_language(project_path)
-    deps = parse_dependencies(project_path)
-    cmds = extract_commands(project_path)
+    profile = get_language_profile(primary)
+    deps = parse_dependencies(project_path, profile=profile)
+    cmds = extract_commands(project_path, profile=profile)
     configs = scan_existing_configs(project_path)
+    frameworks = detect_frameworks(profile, deps)
 
     # 环境扫描
     env = scan_environment() if scan_env else EnvInfo()
@@ -112,4 +117,6 @@ def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysi
         has_tests=has_tests,
         test_framework=test_framework,
         has_ci=has_ci,
+        profile=profile,
+        frameworks=frameworks,
     )

@@ -1,8 +1,14 @@
 # {{ project_name }} — Cursor Rules
 
 # 项目概述
-语言: {{ primary_language }}{% for dep in dependencies %}{% if not dep.dev %}
+语言: {{ primary_language }}
+{% if frameworks %}框架: {{ frameworks | join(", ") }}{% endif %}
+{% for dep in dependencies %}{% if not dep.dev %}
 依赖: {{ dep.name }}{% endif %}{% endfor %}
+{% if profile and profile.setup_commands %}
+# 快速开始
+{% for cmd in profile.setup_commands %}运行: {{ cmd }}
+{% endfor %}{% endif %}
 
 # 编码规范
 - 代码注释使用中文，变量名和函数名使用英文

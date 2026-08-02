@@ -1,5 +1,5 @@
 ---
-name: {{ project_name | lower | replace("-", "-") | replace("_", "-") }}
+name: {{ project_name | lower | replace("_", "-") }}
 description: |-
   项目 {{ project_name }} 的开发指南。包含构建、测试、部署的标准流程和编码规范。
 license: MIT
@@ -9,22 +9,17 @@ license: MIT
 
 ## 快速开始
 
-{% if primary_language == "Python" %}```bash
-# 安装依赖
-pip install -e ".[dev]"
-
-# 运行测试
-{{ commands.test[0] if commands.test else "pytest" }}
-
-# 代码检查
-{{ commands.lint[0] if commands.lint else "# 未检测到 lint 工具" }}
+{% if profile %}
+{% for cmd in profile.setup_commands %}```bash
+{{ cmd }}
 ```
-{% endif %}
+{% endfor %}{% endif %}
 
 ## 项目结构
 
 - 主语言: {{ primary_language }}
-{% for dep in dependencies %}{% if not dep.dev %}- 依赖: {{ dep.name }}
+{% if frameworks %}- 框架: {{ frameworks | join(", ") }}
+{% endif %}{% for dep in dependencies %}{% if not dep.dev %}- 依赖: {{ dep.name }}
 {% endif %}{% endfor %}
 
 ## 编码规范

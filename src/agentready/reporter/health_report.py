@@ -34,6 +34,11 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
         console.print("\n[bold]语言:[/bold] ", end="")
         console.print(lang_text)
 
+    if analysis.profile:
+        console.print(f"\n[bold]语言画像:[/bold] {analysis.profile.name}")
+    if analysis.frameworks:
+        console.print(f"[bold]框架:[/bold] {', '.join(analysis.frameworks)}")
+
     # 框架/依赖
     main_deps = [d for d in analysis.dependencies if not d.dev]
     if main_deps:

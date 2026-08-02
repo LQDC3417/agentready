@@ -30,4 +30,6 @@ class AgentsMdGenerator(BaseGenerator):
             dependencies=self.analysis.dependencies,
             commands=self.analysis.commands.to_dict(),
             env_info=self.analysis.env_info,
+            profile=self.analysis.profile,
+            frameworks=self.analysis.frameworks,
         )

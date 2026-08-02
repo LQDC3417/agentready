@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+from .language_profiles import LanguageProfile
+
 
 class CommandSet:
     """项目命令集合。"""
@@ -24,8 +26,11 @@ class CommandSet:
         }
 
 
-def extract_commands(project_path: Path) -> CommandSet:
-    """从项目配置文件中提取构建/测试/lint 命令。"""
+def extract_commands(
+    project_path: Path,
+    profile: LanguageProfile | None = None,
+) -> CommandSet:
+    """从项目配置文件中提取命令；profile 提供默认命令兜底。"""
     project_path = Path(project_path)
     cmds = CommandSet()
 
@@ -34,6 +39,10 @@ def extract_commands(project_path: Path) -> CommandSet:
     _extract_from_makefile(project_path, cmds)
     _extract_from_go(project_path, cmds)
     _extract_from_cargo(project_path, cmds)
+    _extract_from_java(project_path, cmds)
+    _extract_from_ruby(project_path, cmds)
+    _extract_from_php(project_path, cmds)
+    _apply_profile_defaults(cmds, profile)
 
     return cmds
 
@@ -161,3 +170,66 @@ def _extract_from_cargo(project_path: Path, cmds: CommandSet):
         cmds.lint.append("cargo clippy")
         cmds.format.append("cargo fmt")
         cmds.run.append("cargo run")
+
+
+def _apply_profile_defaults(cmds: CommandSet, profile: LanguageProfile | None):
+    """只在对应分类为空时填充 profile 默认命令。"""
+    if profile is None:
+        return
+    target_map = {
+        "build": cmds.build,
+        "test": cmds.test,
+        "lint": cmds.lint,
+        "format": cmds.format,
+        "run": cmds.run,
+    }
+    for category, commands in profile.commands.items():
+        target = target_map.get(category)
+        if target is not None and not target:
+            target.extend(commands)
+
+
+def _extract_from_java(project_path: Path, cmds: CommandSet):
+    """Java Maven/Gradle 命令提取。"""
+    if (project_path / "pom.xml").exists():
+        cmds.build.append("mvn verify")
+        cmds.test.append("mvn test")
+        cmds.lint.append("mvn checkstyle:check")
+    elif (project_path / "build.gradle").exists():
+        cmds.build.append("gradle build")
+        cmds.test.append("gradle test")
+        cmds.lint.append("gradle check")
+
+
+def _extract_from_ruby(project_path: Path, cmds: CommandSet):
+    """Ruby Rake/RuboCop 命令提取。"""
+    if (project_path / "Gemfile").exists():
+        cmds.build.append("bundle exec rake build")
+        cmds.test.append("bundle exec rake test")
+        cmds.lint.append("bundle exec rubocop")
+
+
+def _extract_from_php(project_path: Path, cmds: CommandSet):
+    """PHP composer scripts 提取，无 scripts 时给出 phpunit 默认。"""
+    filepath = project_path / "composer.json"
+    if not filepath.exists():
+        return
+    try:
+        import json
+
+        data = json.loads(filepath.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, OSError, ValueError):
+        return
+
+    scripts = data.get("scripts", {})
+    script_map = {
+        "build": cmds.build,
+        "test": cmds.test,
+        "lint": cmds.lint,
+        "format": cmds.format,
+    }
+    for script_name, target_list in script_map.items():
+        if script_name in scripts:
+            target_list.append(f"composer run {script_name}")
+    if not cmds.test:
+        cmds.test.append("vendor/bin/phpunit")

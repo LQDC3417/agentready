@@ -27,4 +27,6 @@ class McpConfigGenerator(BaseGenerator):
             project_name=self.analysis.project_name,
             primary_language=self.analysis.primary_language or "Unknown",
             project_path=str(self.analysis.project_path).replace("\\", "/"),
+            profile=self.analysis.profile,
+            frameworks=self.analysis.frameworks,
         )

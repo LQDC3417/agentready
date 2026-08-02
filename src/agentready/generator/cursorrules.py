@@ -28,4 +28,6 @@ class CursorRulesGenerator(BaseGenerator):
             primary_language=self.analysis.primary_language or "Unknown",
             dependencies=self.analysis.dependencies,
             commands=self.analysis.commands.to_dict(),
+            profile=self.analysis.profile,
+            frameworks=self.analysis.frameworks,
         )

@@ -1,14 +1,20 @@
 # {{ project_name }} — Copilot Instructions
 
-> 本文件由 [agentready](https://github.com/user/agentready) 自动生成。
+> 本文件由 [agentready](https://github.com/LQDC3417/agentready) 自动生成。
 
 ## 项目信息
 
 - 语言: {{ primary_language }}
-{% if commands.test %}- 测试命令: `{{ commands.test[0] }}`
+{% if frameworks %}- 框架: {{ frameworks | join(", ") }}
+{% endif %}{% if commands.test %}- 测试命令: `{{ commands.test[0] }}`
 {% endif %}{% if commands.lint %}- 代码检查: `{{ commands.lint[0] }}`
 {% endif %}{% if commands.format %}- 格式化: `{{ commands.format[0] }}`
 {% endif %}
+
+{% if profile and profile.setup_commands %}## 快速开始
+
+{% for cmd in profile.setup_commands %}- `{{ cmd }}`
+{% endfor %}{% endif %}
 
 ## 编码规范
 
