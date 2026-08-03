@@ -111,3 +111,92 @@ def test_validate_invalid_json(tmp_path):
 
     assert result.exit_code != 0
     assert "校验失败" in result.output
+
+
+def test_generate_creates_specified_file(tmp_path):
+    """测试 generate --type agents 只生成 AGENTS.md。"""
+    runner = CliRunner()
+    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+
+    result = runner.invoke(main, ["generate", str(tmp_path), "--type", "agents", "--no-env"])
+    assert result.exit_code == 0
+    assert (tmp_path / "AGENTS.md").exists()
+    # 其他文件不应被创建
+    assert not (tmp_path / "CLAUDE.md").exists()
+    assert not (tmp_path / ".cursorrules").exists()
+
+
+def test_generate_multiple_types(tmp_path):
+    """测试 generate 同时指定多个类型。"""
+    runner = CliRunner()
+    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+
+    result = runner.invoke(main, ["generate", str(tmp_path), "--type", "agents", "--type", "mcp", "--no-env"])
+    assert result.exit_code == 0
+    assert (tmp_path / "AGENTS.md").exists()
+    assert (tmp_path / ".claude" / "mcp.json").exists()
+
+
+def test_generate_requires_type(tmp_path):
+    """测试 generate 不指定 --type 时报错退出。"""
+    runner = CliRunner()
+    result = runner.invoke(main, ["generate", str(tmp_path)])
+    assert result.exit_code != 0
+    assert "至少指定一个" in result.output
+
+
+def test_generate_skip_existing(tmp_path):
+    """测试 generate 跳过已存在的文件。"""
+    runner = CliRunner()
+    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+
+    # 第一次生成
+    runner.invoke(main, ["generate", str(tmp_path), "--type", "agents", "--no-env"])
+    original = (tmp_path / "AGENTS.md").read_text(encoding="utf-8")
+
+    # 第二次不加 --force，应跳过
+    result = runner.invoke(main, ["generate", str(tmp_path), "--type", "agents", "--no-env"])
+    assert "跳过" in result.output
+    assert (tmp_path / "AGENTS.md").read_text(encoding="utf-8") == original
+
+
+def test_generate_force_overwrites(tmp_path):
+    """测试 generate --force 覆盖已有文件。"""
+    runner = CliRunner()
+    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+
+    # 第一次生成
+    runner.invoke(main, ["generate", str(tmp_path), "--type", "agents", "--no-env"])
+    # 写入手动内容
+    agents = tmp_path / "AGENTS.md"
+    agents.write_text(agents.read_text(encoding="utf-8") + "\n# manual\n", encoding="utf-8")
+
+    # --force 覆盖
+    result = runner.invoke(main, ["generate", str(tmp_path), "--type", "agents", "--force", "--no-env"])
+    assert result.exit_code == 0
+    content = agents.read_text(encoding="utf-8")
+    assert "# manual" not in content
+
+
+def test_check_command(tmp_path):
+    """测试 check 子命令输出 Agent 就绪度评分。"""
+    runner = CliRunner()
+    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+
+    result = runner.invoke(main, ["check", str(tmp_path)])
+    assert result.exit_code == 0
+    # 空项目应显示未配置
+    assert "Agent" in result.output
+
+
+def test_check_with_configs(tmp_path):
+    """测试 check 对已有配置文件的项目给出高分。"""
+    runner = CliRunner()
+    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+    (tmp_path / "AGENTS.md").write_text("# agents", encoding="utf-8")
+    (tmp_path / "CLAUDE.md").write_text("# claude", encoding="utf-8")
+    (tmp_path / ".cursorrules").write_text("# cursor", encoding="utf-8")
+
+    result = runner.invoke(main, ["check", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "部分就绪" in result.output or "完备" in result.output

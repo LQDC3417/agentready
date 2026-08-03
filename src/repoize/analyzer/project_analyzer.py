@@ -7,8 +7,10 @@ from .cmd_extractor import CommandSet, extract_commands
 from .config_scanner import ConfigStatus, scan_existing_configs
 from .dep_parser import DepInfo, parse_dependencies
 from .env_scanner import EnvInfo, scan_environment
-from .lang_detector import detect_languages, get_primary_language
+from .lang_detector import IGNORE_DIRS, detect_languages, get_primary_language
 from .language_profiles import LanguageProfile, detect_frameworks, get_language_profile
+
+_TREE_MAX_DEPTH = 2
 
 
 @dataclass
@@ -28,6 +30,7 @@ class ProjectAnalysis:
     has_ci: bool = False
     profile: LanguageProfile | None = None
     frameworks: list[str] = field(default_factory=list)
+    directory_tree: str = ""
 
     @property
     def agent_ready_score(self) -> int:
@@ -126,6 +129,9 @@ def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysi
         )
     )
 
+    # 生成目录树
+    directory_tree = _build_directory_tree(project_path)
+
     return ProjectAnalysis(
         project_path=project_path,
         project_name=project_path.name,
@@ -140,4 +146,48 @@ def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysi
         has_ci=has_ci,
         profile=profile,
         frameworks=frameworks,
+        directory_tree=directory_tree,
     )
+
+
+def _build_directory_tree(root: Path, max_depth: int = _TREE_MAX_DEPTH) -> str:
+    """生成项目目录树文本（类似 tree -L 2），跳过忽略目录。"""
+    hidden_exceptions = {".github", ".gitlab-ci.yml"}
+    lines: list[str] = [f"{root.name}/"]
+    _walk_tree(root, "", max_depth, 0, hidden_exceptions, lines)
+    return "\n".join(lines)
+
+
+def _walk_tree(
+    current: Path,
+    prefix: str,
+    max_depth: int,
+    depth: int,
+    hidden_exceptions: set[str],
+    lines: list[str],
+) -> None:
+    """递归遍历目录，生成树形文本。"""
+    if depth >= max_depth:
+        return
+    try:
+        entries = sorted(current.iterdir(), key=lambda e: (not e.is_dir(), e.name.lower()))
+    except PermissionError:
+        return
+
+    visible = []
+    for entry in entries:
+        name = entry.name
+        if name.startswith(".") and name not in hidden_exceptions:
+            continue
+        if entry.is_dir() and name in IGNORE_DIRS:
+            continue
+        visible.append(entry)
+
+    for i, entry in enumerate(visible):
+        is_last = i == len(visible) - 1
+        connector = "└── " if is_last else "├── "
+        child_prefix = prefix + ("    " if is_last else "│   ")
+        suffix = "/" if entry.is_dir() else ""
+        lines.append(f"{prefix}{connector}{entry.name}{suffix}")
+        if entry.is_dir():
+            _walk_tree(entry, child_prefix, max_depth, depth + 1, hidden_exceptions, lines)

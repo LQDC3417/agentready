@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/LQDC3417/repoize/schemas/analysis.schema.json",
+  "$id": "https://raw.githubusercontent.com/LQDC3417/repoize/main/src/repoize/schemas/analysis.schema.json",
   "title": "Repoize Analysis",
   "type": "object",
   "required": [
@@ -32,7 +32,10 @@
       "type": "string"
     },
     "primary_language": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "languages": {
       "type": "object",
@@ -43,7 +46,10 @@
       }
     },
     "profile": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "frameworks": {
       "type": "array",
@@ -73,7 +79,10 @@
       "type": "boolean"
     },
     "test_framework": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "has_ci": {
       "type": "boolean"
@@ -91,7 +100,11 @@
   "$defs": {
     "dependency": {
       "type": "object",
-      "required": ["name", "version_spec", "dev"],
+      "required": [
+        "name",
+        "version_spec",
+        "dev"
+      ],
       "properties": {
         "name": {
           "type": "string"
@@ -107,7 +120,13 @@
     },
     "commands": {
       "type": "object",
-      "required": ["build", "test", "lint", "format", "run"],
+      "required": [
+        "build",
+        "test",
+        "lint",
+        "format",
+        "run"
+      ],
       "properties": {
         "build": {
           "type": "array",
@@ -144,7 +163,12 @@
     },
     "config_status": {
       "type": "object",
-      "required": ["name", "config_type", "exists", "path"],
+      "required": [
+        "name",
+        "config_type",
+        "exists",
+        "path"
+      ],
       "properties": {
         "name": {
           "type": "string"
@@ -163,7 +187,14 @@
     },
     "env_info": {
       "type": "object",
-      "required": ["system", "arch", "shell", "dev_env_vars", "tools", "path_entries"],
+      "required": [
+        "system",
+        "arch",
+        "shell",
+        "dev_env_vars",
+        "tools",
+        "path_entries"
+      ],
       "properties": {
         "system": {
           "type": "string"

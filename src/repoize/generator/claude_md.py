@@ -1,9 +1,6 @@
 """CLAUDE.md 生成器"""
 
-from pathlib import Path
-
-from jinja2 import Environment, FileSystemLoader
-
+from . import get_template_env
 from .base import BaseGenerator
 
 
@@ -19,8 +16,7 @@ class ClaudeMdGenerator(BaseGenerator):
         return "CLAUDE.md"
 
     def generate(self) -> str:
-        template_dir = Path(__file__).parent.parent / "templates"
-        env = Environment(loader=FileSystemLoader(str(template_dir)))
+        env = get_template_env()
         template = env.get_template("claude_md.j2")
 
         return template.render(

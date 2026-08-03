@@ -50,6 +50,11 @@
 {{ cmd }}
 ```
 {% endfor %}{% endif %}
+{% if commands.run %}## 运行
+{% for cmd in commands.run %}```bash
+{{ cmd }}
+```
+{% endfor %}{% endif %}
 
 ## 开发环境
 

@@ -12,6 +12,17 @@ GENERATED_END = "<!-- repoize:generated-end -->"
 GENERATED_BANNER = "<!-- 本文件由 repoize 自动生成；可修改生成区间之外的内容。 -->"
 
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    """递归深度合并两个字典。override 中的键覆盖 base，嵌套 dict 递归合并。"""
+    result = deepcopy(base)
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = deepcopy(value)
+    return result
+
+
 class BaseGenerator(ABC):
     """配置文件生成器基类。"""
 
@@ -94,12 +105,7 @@ class BaseGenerator(ABC):
         if not isinstance(old_data, dict) or not isinstance(new_data, dict):
             return None
 
-        merged = deepcopy(old_data)
-        for key, value in new_data.items():
-            if key not in merged:
-                merged[key] = value
-            elif isinstance(value, dict) and isinstance(merged[key], dict):
-                merged[key].update(value)
+        merged = _deep_merge(old_data, new_data)
 
         output_path.write_text(
             json.dumps(merged, ensure_ascii=False, indent=2) + "\n",

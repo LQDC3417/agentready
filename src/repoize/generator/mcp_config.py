@@ -1,9 +1,6 @@
 """MCP Server 配置生成器"""
 
-from pathlib import Path
-
-from jinja2 import Environment, FileSystemLoader
-
+from . import get_template_env
 from .base import BaseGenerator
 
 
@@ -19,8 +16,7 @@ class McpConfigGenerator(BaseGenerator):
         return ".claude/mcp.json"
 
     def generate(self) -> str:
-        template_dir = Path(__file__).parent.parent / "templates"
-        env = Environment(loader=FileSystemLoader(str(template_dir)))
+        env = get_template_env()
         template = env.get_template("mcp_config.j2")
 
         return template.render(

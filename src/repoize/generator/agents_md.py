@@ -1,9 +1,6 @@
 """AGENTS.md 生成器"""
 
-from pathlib import Path
-
-from jinja2 import Environment, FileSystemLoader
-
+from . import get_template_env
 from .base import BaseGenerator
 
 
@@ -19,8 +16,7 @@ class AgentsMdGenerator(BaseGenerator):
         return "AGENTS.md"
 
     def generate(self) -> str:
-        template_dir = Path(__file__).parent.parent / "templates"
-        env = Environment(loader=FileSystemLoader(str(template_dir)))
+        env = get_template_env()
         template = env.get_template("agents_md.j2")
 
         return template.render(
@@ -32,4 +28,5 @@ class AgentsMdGenerator(BaseGenerator):
             env_info=self.analysis.env_info,
             profile=self.analysis.profile,
             frameworks=self.analysis.frameworks,
+            directory_tree=self.analysis.directory_tree,
         )

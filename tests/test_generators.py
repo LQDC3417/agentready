@@ -252,3 +252,85 @@ def test_mcp_update_preserves_extra_servers(tmp_path):
     assert "custom" in data["mcpServers"]
     assert "git" in data["mcpServers"]
     assert "filesystem" in data["mcpServers"]
+
+
+def test_agents_md_contains_dynamic_directory_tree(tmp_path):
+    """测试 AGENTS.md 包含动态生成的目录树，而非硬编码内容。"""
+    (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "app.py").write_text("pass", encoding="utf-8")
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_app.py").write_text("pass", encoding="utf-8")
+
+    analysis = analyze_project(tmp_path, scan_env=False)
+    content = AgentsMdGenerator(analysis).generate()
+
+    # 应包含真实目录名
+    assert "main.py" in content
+    assert "src/" in content
+    assert "tests/" in content
+    # 不应包含旧的硬编码注释
+    assert "# 源代码" not in content
+
+
+def test_directory_tree_skips_ignored_dirs(tmp_path):
+    """测试目录树跳过 __pycache__ 等忽略目录。"""
+    (tmp_path / "main.py").write_text("pass", encoding="utf-8")
+    (tmp_path / "__pycache__").mkdir()
+    (tmp_path / "__pycache__" / "cache.pyc").write_bytes(b"")
+    (tmp_path / ".git").mkdir()
+
+    analysis = analyze_project(tmp_path, scan_env=False)
+    tree = analysis.directory_tree
+
+    assert "__pycache__" not in tree
+    assert ".git" not in tree
+
+
+def test_mcp_deep_merge_preserves_nested_config(tmp_path):
+    """测试 MCP JSON 更新时递归合并嵌套配置。"""
+    analysis = _make_analysis()
+    output_path = tmp_path / ".claude" / "mcp.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # 用户自定义了一个带嵌套 env 的 server
+    user_config = {
+        "mcpServers": {
+            "git": {
+                "command": "uvx",
+                "args": ["mcp-server-git", "--repository", "/custom/path"],
+                "env": {"GIT_DIR": "/custom/.git"},
+            }
+        }
+    }
+    output_path.write_text(
+        json.dumps(user_config, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    McpConfigGenerator(analysis).update(tmp_path)
+
+    data = json.loads(output_path.read_text(encoding="utf-8"))
+    # 用户的嵌套 env 应被保留
+    assert data["mcpServers"]["git"]["env"]["GIT_DIR"] == "/custom/.git"
+    # 用户自定义的 args 也应保留（因为模板生成的 args 包含项目路径，是同一 key）
+    # 模板新生成的 filesystem server 应被添加
+    assert "filesystem" in data["mcpServers"]
+
+
+def test_agents_md_contains_run_commands(tmp_path):
+    """测试 AGENTS.md 包含 run 命令（如 npm start）。"""
+    pkg = {
+        "scripts": {
+            "start": "node server.js",
+            "dev": "nodemon server.js",
+            "test": "jest",
+        },
+    }
+    (tmp_path / "package.json").write_text(json.dumps(pkg), encoding="utf-8")
+    (tmp_path / "index.js").write_text("console.log('hi')", encoding="utf-8")
+
+    analysis = analyze_project(tmp_path, scan_env=False)
+    content = AgentsMdGenerator(analysis).generate()
+
+    assert "npm run start" in content or "npm run dev" in content

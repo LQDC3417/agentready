@@ -95,12 +95,20 @@ def get_primary_language(project_path: Path) -> str | None:
 
 
 def _walk_files(root: Path, max_depth: int):
-    """递归遍历文件，跳过忽略的目录。"""
+    """递归遍历文件，跳过忽略的目录，防御符号链接循环。"""
+    visited: set[Path] = set()
     stack: list[tuple[Path, int]] = [(root, 0)]
     while stack:
         current, depth = stack.pop()
         if depth > max_depth:
             continue
+        try:
+            real = current.resolve()
+        except OSError:
+            continue
+        if real in visited:
+            continue
+        visited.add(real)
         try:
             for entry in current.iterdir():
                 if entry.name.startswith(".") and entry.name not in {".github"}:
