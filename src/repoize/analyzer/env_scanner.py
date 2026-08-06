@@ -1,4 +1,4 @@
-"""环境变量扫描器 — 提取开发相关的环境信息"""
+﻿"""环境变量扫描器 — 提取开发相关的环境信息"""
 
 import os
 import platform
@@ -128,9 +128,8 @@ def _is_dev_related(name: str) -> bool:
     return any(name.startswith(prefix) for prefix in DEV_ENV_PREFIXES)
 
 
-def _run_tool_check(cmd: list[str], use_stderr: bool = False) -> tuple[str, str | None]:
+def _run_tool_check(tool_name: str, cmd: list[str], use_stderr: bool = False) -> tuple[str, str | None]:
     """运行工具版本检测命令，返回 (工具名, 版本字符串) 或 (工具名, None)。"""
-    tool_name = cmd[0] if cmd else "unknown"
     try:
         result = subprocess.run(
             cmd,
@@ -195,7 +194,7 @@ def scan_environment() -> EnvInfo:
     # 工具版本检测（并行执行）
     with ThreadPoolExecutor(max_workers=6) as executor:
         futures = {
-            executor.submit(_run_tool_check, cmd, use_stderr): (tool_name, cmd, use_stderr)
+            executor.submit(_run_tool_check, tool_name, cmd, use_stderr): (tool_name, cmd, use_stderr)
             for tool_name, cmd, use_stderr in TOOL_CHECKS
         }
 
@@ -205,3 +204,5 @@ def scan_environment() -> EnvInfo:
                 info.tools.append((tool_name, version))
 
     return info
+
+
