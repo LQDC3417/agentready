@@ -13,6 +13,14 @@ from .quality_analyzer import CodeQualityMetrics, analyze_code_quality
 
 _TREE_MAX_DEPTH = 2
 
+# 测试框架检测映射
+_TEST_FRAMEWORK_PATTERNS: list[tuple[str, str]] = [
+    ("pytest", "pytest"),
+    ("jest", "jest"),
+    ("go test", "go test"),
+    ("cargo test", "cargo test"),
+]
+
 
 @dataclass
 class ProjectAnalysis:
@@ -55,6 +63,7 @@ class ProjectAnalysis:
 
     @property
     def agent_ready_label(self) -> str:
+        """Agent 就绪度标签。"""
         s = self.agent_ready_score
         if s >= 80:
             return "完备"
@@ -95,6 +104,7 @@ class ProjectAnalysis:
 
     @property
     def code_quality_label(self) -> str:
+        """代码质量标签。"""
         s = self.code_quality_score
         if s >= 80:
             return "优秀"
@@ -129,57 +139,97 @@ class ProjectAnalysis:
         }
 
 
+def _detect_test_setup(project_path: Path, commands: CommandSet) -> tuple[bool, str | None]:
+    """检测项目的测试配置。
+
+    Args:
+        project_path: 项目根目录
+        commands: 提取的命令集
+
+    Returns:
+        (has_tests, test_framework) 元组
+    """
+    # 1. 从命令中检测测试框架
+    if commands.test:
+        test_cmd = commands.test[0].lower()
+        for pattern, framework in _TEST_FRAMEWORK_PATTERNS:
+            if pattern in test_cmd:
+                return True, framework
+        return True, None
+
+    # 2. 检测测试目录
+    if (project_path / "tests").is_dir() or (project_path / "test").is_dir():
+        return True, None
+
+    return False, None
+
+
+def _detect_ci_config(project_path: Path) -> bool:
+    """检测项目是否配置了 CI/CD。
+
+    Args:
+        project_path: 项目根目录
+
+    Returns:
+        是否有 CI 配置
+    """
+    ci_indicators = [
+        (".github", "workflows"),  # GitHub Actions
+        ".gitlab-ci.yml",  # GitLab CI
+        "Jenkinsfile",  # Jenkins
+        ".circleci",  # CircleCI
+    ]
+
+    for indicator in ci_indicators:
+        if isinstance(indicator, tuple):
+            # 目录结构检查
+            dir_name, sub_dir = indicator
+            if (project_path / dir_name / sub_dir).is_dir():
+                return True
+        else:
+            # 文件检查
+            if (project_path / indicator).exists():
+                return True
+
+    return False
+
+
 def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysis:
     """执行完整的项目分析。
 
     Args:
         project_path: 项目根目录
         scan_env: 是否扫描系统环境变量（默认 True）
+
+    Returns:
+        项目分析结果
     """
     project_path = Path(project_path).resolve()
 
+    # 1. 基础分析
     languages = detect_languages(project_path)
     primary = get_primary_language(project_path)
     profile = get_language_profile(primary)
+
+    # 2. 依赖和命令分析
     deps = parse_dependencies(project_path, profile=profile)
     cmds = extract_commands(project_path, profile=profile)
+
+    # 3. 配置和框架检测
     configs = scan_existing_configs(project_path)
     frameworks = detect_frameworks(profile, deps)
 
-    # 环境扫描
+    # 4. 环境扫描
     env = scan_environment() if scan_env else EnvInfo()
 
-    # 检测测试
-    has_tests = False
-    test_framework = None
-    if cmds.test:
-        has_tests = True
-        test_cmd = cmds.test[0].lower()
-        if "pytest" in test_cmd:
-            test_framework = "pytest"
-        elif "jest" in test_cmd:
-            test_framework = "jest"
-        elif "go test" in test_cmd:
-            test_framework = "go test"
-        elif "cargo test" in test_cmd:
-            test_framework = "cargo test"
-    elif (project_path / "tests").is_dir() or (project_path / "test").is_dir():
-        has_tests = True
+    # 5. 测试和 CI 检测
+    has_tests, test_framework = _detect_test_setup(project_path, cmds)
+    has_ci = _detect_ci_config(project_path)
 
-    # 检测 CI
-    has_ci = any(
-        (
-            (project_path / ".github" / "workflows").is_dir(),
-            (project_path / ".gitlab-ci.yml").exists(),
-            (project_path / "Jenkinsfile").exists(),
-            (project_path / ".circleci").is_dir(),
-        )
-    )
-
-    # 生成目录树
+    # 6. 生成目录树
     directory_tree = _build_directory_tree(project_path)
 
-    # 分析代码质量
+    # 7. 分析代码质量
     dep_names = [dep.name for dep in deps]
     quality_metrics = analyze_code_quality(project_path, profile, dep_names)
 
@@ -203,7 +253,15 @@ def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysi
 
 
 def _build_directory_tree(root: Path, max_depth: int = _TREE_MAX_DEPTH) -> str:
-    """生成项目目录树文本（类似 tree -L 2），跳过忽略目录。"""
+    """生成项目目录树文本（类似 tree -L 2），跳过忽略目录。
+
+    Args:
+        root: 项目根目录
+        max_depth: 最大遍历深度
+
+    Returns:
+        目录树文本
+    """
     hidden_exceptions = {".github", ".gitlab-ci.yml"}
     lines: list[str] = [f"{root.name}/"]
     _walk_tree(root, "", max_depth, 0, hidden_exceptions, lines)
@@ -218,7 +276,16 @@ def _walk_tree(
     hidden_exceptions: set[str],
     lines: list[str],
 ) -> None:
-    """递归遍历目录，生成树形文本。"""
+    """递归遍历目录，生成树形文本。
+
+    Args:
+        current: 当前遍历的目录
+        prefix: 当前行的前缀（用于缩进和连接线）
+        max_depth: 最大遍历深度
+        depth: 当前深度
+        hidden_exceptions: 需要显示的隐藏目录/文件集合
+        lines: 输出行列表
+    """
     if depth >= max_depth:
         return
     try:

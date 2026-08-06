@@ -27,6 +27,7 @@ class BaseGenerator(ABC):
     """配置文件生成器基类。"""
 
     def __init__(self, analysis: ProjectAnalysis):
+        """初始化生成器基类。"""
         self.analysis = analysis
 
     @property

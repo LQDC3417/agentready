@@ -11,11 +11,13 @@ class DepInfo:
     """依赖信息。"""
 
     def __init__(self, name: str, version_spec: str = "", dev: bool = False):
+        """初始化依赖信息。"""
         self.name = name
         self.version_spec = version_spec
         self.dev = dev
 
     def __repr__(self) -> str:
+        """返回依赖信息的字符串表示。"""
         suffix = " (dev)" if self.dev else ""
         return f"DepInfo({self.name}{suffix})"
 
@@ -122,6 +124,7 @@ def _parse_pyproject(filepath: Path) -> list[DepInfo]:
     lines = content.splitlines()
     current_section = ""
     i = 0
+
     while i < len(lines):
         line = lines[i].strip()
 
@@ -131,43 +134,74 @@ def _parse_pyproject(filepath: Path) -> list[DepInfo]:
             i += 1
             continue
 
-        # 只在 [project] 和 [project.optional-dependencies] 下解析依赖
-        if current_section == "project" and line.startswith("dependencies"):
-            is_dev = False
-        elif current_section == "project.optional-dependencies" and "=" in line:
-            is_dev = True
-        else:
+        # 检测依赖行
+        is_dev = _determine_dev_status(current_section, line)
+        if is_dev is None:
             i += 1
             continue
 
-        # 提取 = 右边的值
+        # 解析依赖数组
         eq_pos = line.index("=")
         value_part = line[eq_pos + 1 :].strip()
+        names, new_i = _parse_toml_array(lines, i, value_part)
 
-        if value_part.startswith("["):
-            if value_part.endswith("]"):
-                # 单行数组: dependencies = ["fastapi", "uvicorn"]
-                names = _extract_names_from_value(value_part)
-                for name in names:
-                    deps.append(DepInfo(name, dev=is_dev))
-            else:
-                # 多行数组: dependencies = [ 后面跟多行
-                # 把 [ 后面的部分也一起处理
-                accumulated = value_part
-                i += 1
-                while i < len(lines):
-                    next_line = lines[i].strip()
-                    accumulated += " " + next_line
-                    if "]" in next_line:
-                        break
-                    i += 1
-                names = _extract_names_from_value(accumulated)
-                for name in names:
-                    deps.append(DepInfo(name, dev=is_dev))
+        # 添加到结果
+        for name in names:
+            deps.append(DepInfo(name, dev=is_dev))
 
-        i += 1
+        i = new_i + 1
 
     return deps
+
+
+def _determine_dev_status(section: str, line: str) -> bool | None:
+    """确定依赖是否为开发依赖。
+
+    Args:
+        section: 当前 TOML section
+        line: 当前行内容
+
+    Returns:
+        True 表示 dev 依赖，False 表示普通依赖，None 表示不是依赖行
+    """
+    if section == "project" and line.startswith("dependencies"):
+        return False
+    if section == "project.optional-dependencies" and "=" in line:
+        return True
+    return None
+
+
+def _parse_toml_array(lines: list[str], current_idx: int, value_part: str) -> tuple[list[str], int]:
+    """解析 TOML 数组，支持单行和多行格式。
+
+    Args:
+        lines: 所有行内容
+        current_idx: 当前行索引
+        value_part: 等号右边的值部分
+
+    Returns:
+        包名列表和最后处理的行索引
+    """
+    if value_part.startswith("["):
+        if value_part.endswith("]"):
+            # 单行数组: dependencies = ["fastapi", "uvicorn"]
+            names = _extract_names_from_value(value_part)
+            return names, current_idx
+        else:
+            # 多行数组: dependencies = [ 后面跟多行
+            accumulated = value_part
+            i = current_idx + 1
+            while i < len(lines):
+                next_line = lines[i].strip()
+                accumulated += " " + next_line
+                if "]" in next_line:
+                    break
+                i += 1
+            names = _extract_names_from_value(accumulated)
+            return names, i
+
+    # 非数组格式，返回空
+    return [], current_idx
 
 
 def _parse_requirements(filepath: Path) -> list[DepInfo]:

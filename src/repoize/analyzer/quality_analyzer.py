@@ -213,13 +213,30 @@ def _detect_quality_tools(
     """检测代码质量工具。"""
     tools_found: set[str] = set()
 
-    # 1. 从依赖中检测质量工具
+    # 从不同来源检测质量工具
+    tools_found.update(_detect_tools_from_dependencies(profile, dependencies))
+    tools_found.update(_detect_tools_from_pyproject(project_path))
+    tools_found.update(_detect_tools_from_config_files(project_path))
+
+    metrics.quality_tools_found = sorted(tools_found)
+
+
+def _detect_tools_from_dependencies(
+    profile: LanguageProfile | None,
+    dependencies: list[str] | None,
+) -> set[str]:
+    """从项目依赖中检测质量工具。"""
+    tools: set[str] = set()
     if profile and dependencies:
         for tool in profile.quality_tools:
             if any(tool in dep.lower() for dep in dependencies):
-                tools_found.add(tool)
+                tools.add(tool)
+    return tools
 
-    # 2. 从 pyproject.toml 配置节检测质量工具
+
+def _detect_tools_from_pyproject(project_path: Path) -> set[str]:
+    """从 pyproject.toml 配置节检测质量工具。"""
+    tools: set[str] = set()
     try:
         import tomllib
 
@@ -230,11 +247,15 @@ def _detect_quality_tools(
             tool_section = config.get("tool", {})
             for tool_name in ["ruff", "mypy", "pytest", "black", "isort", "pylint", "flake8"]:
                 if tool_name in tool_section:
-                    tools_found.add(tool_name)
+                    tools.add(tool_name)
     except Exception:
         pass
+    return tools
 
-    # 3. 从独立配置文件检测质量工具
+
+def _detect_tools_from_config_files(project_path: Path) -> set[str]:
+    """从独立配置文件检测质量工具。"""
+    tools: set[str] = set()
     config_tool_map = {
         ".eslintrc": "eslint",
         ".eslintrc.js": "eslint",
@@ -254,9 +275,8 @@ def _detect_quality_tools(
 
     for config_file, tool_name in config_tool_map.items():
         if (project_path / config_file).exists():
-            tools_found.add(tool_name)
-
-    metrics.quality_tools_found = sorted(tools_found)
+            tools.add(tool_name)
+    return tools
 
 
 def _detect_quality_configs(project_path: Path, metrics: CodeQualityMetrics) -> None:
@@ -309,10 +329,7 @@ def _detect_quality_configs(project_path: Path, metrics: CodeQualityMetrics) -> 
 
 def _calculate_complexity(project_path: Path, metrics: CodeQualityMetrics) -> None:
     """计算代码复杂度（简化版）。"""
-    # 这里只做简单的函数长度统计
-    # 实际的复杂度计算需要更复杂的AST解析
-
-    function_lengths = []
+    function_lengths: list[int] = []
 
     for root, dirs, files in os.walk(project_path):
         dirs[:] = [d for d in dirs if d not in IGNORE_PATTERNS]
@@ -320,46 +337,53 @@ def _calculate_complexity(project_path: Path, metrics: CodeQualityMetrics) -> No
         for file in files:
             file_path = Path(root) / file
             if file_path.suffix in CODE_EXTENSIONS:
-                try:
-                    with open(file_path, encoding="utf-8", errors="ignore") as f:
-                        content = f.read()
-
-                        # 简单的函数长度检测
-                        if file_path.suffix == ".py":
-                            # Python函数定义
-                            functions = re.findall(r"def\s+\w+\s*\(.*?\):", content)
-                            for func in functions:
-                                # 计算函数体长度（简化）
-                                func_start = content.find(func)
-                                if func_start != -1:
-                                    # 找到下一个函数或文件结束
-                                    next_func = content.find("\ndef ", func_start + 1)
-                                    if next_func == -1:
-                                        func_body = content[func_start:]
-                                    else:
-                                        func_body = content[func_start:next_func]
-
-                                    func_lines = func_body.count("\n") + 1
-                                    function_lengths.append(func_lines)
-
-                        elif file_path.suffix in (".js", ".ts", ".jsx", ".tsx"):
-                            # JavaScript/TypeScript函数定义
-                            functions = re.findall(
-                                r"(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:function|\(.*?\)\s*=>))", content
-                            )
-                            for func in functions:
-                                func_start = content.find(func)
-                                if func_start != -1:
-                                    # 简单计算函数长度
-                                    func_lines = content[func_start:].count("\n") + 1
-                                    function_lengths.append(func_lines)
-
-                except (OSError, UnicodeDecodeError):
-                    pass
+                lengths = _extract_function_lengths(file_path)
+                function_lengths.extend(lengths)
 
     if function_lengths:
         metrics.avg_function_length = sum(function_lengths) / len(function_lengths)
         metrics.max_function_length = max(function_lengths)
+
+
+def _extract_function_lengths(file_path: Path) -> list[int]:
+    """提取文件中的函数长度列表。"""
+    lengths: list[int] = []
+    try:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+
+            if file_path.suffix == ".py":
+                lengths = _extract_python_function_lengths(content)
+            elif file_path.suffix in (".js", ".ts", ".jsx", ".tsx"):
+                lengths = _extract_js_ts_function_lengths(content)
+
+    except (OSError, UnicodeDecodeError):
+        pass
+    return lengths
+
+
+def _extract_python_function_lengths(content: str) -> list[int]:
+    """提取Python函数的长度。"""
+    lengths: list[int] = []
+    functions = re.findall(r"def\s+\w+\s*\(.*?\):", content)
+    for func in functions:
+        func_start = content.find(func)
+        if func_start != -1:
+            next_func = content.find("\ndef ", func_start + 1)
+            func_body = content[func_start:] if next_func == -1 else content[func_start:next_func]
+            lengths.append(func_body.count("\n") + 1)
+    return lengths
+
+
+def _extract_js_ts_function_lengths(content: str) -> list[int]:
+    """提取JavaScript/TypeScript函数的长度。"""
+    lengths: list[int] = []
+    functions = re.findall(r"(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:function|\(.*?\)\s*=>))", content)
+    for func in functions:
+        func_start = content.find(func)
+        if func_start != -1:
+            lengths.append(content[func_start:].count("\n") + 1)
+    return lengths
 
 
 def _detect_duplicates(project_path: Path, metrics: CodeQualityMetrics) -> None:

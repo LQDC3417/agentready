@@ -2,19 +2,20 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import click
 from rich.console import Console
 from rich.prompt import Confirm
 
-from .analyzer.project_analyzer import analyze_project
+from .analyzer.project_analyzer import ProjectAnalysis, analyze_project
 from .reporter.health_report import print_health_report
 
 console = Console()
 SCHEMA_PATH = Path(__file__).parent / "schemas" / "analysis.schema.json"
 
 # 生成器类型到模块的映射
-GENERATOR_MAP = {
+GENERATOR_MAP: dict[str, tuple[str, str]] = {
     "agents": ("generator.agents_md", "AgentsMdGenerator"),
     "claude": ("generator.claude_md", "ClaudeMdGenerator"),
     "cursorrules": ("generator.cursorrules", "CursorRulesGenerator"),
@@ -24,8 +25,16 @@ GENERATOR_MAP = {
 }
 
 
-def _load_generator(name: str, analysis):
-    """动态加载生成器类。"""
+def _load_generator(name: str, analysis: ProjectAnalysis) -> Any:
+    """动态加载生成器类。
+
+    Args:
+        name: 生成器名称，必须是 GENERATOR_MAP 中的键
+        analysis: 项目分析结果
+
+    Returns:
+        生成器实例
+    """
     import importlib
 
     module_path, class_name = GENERATOR_MAP[name]
@@ -34,34 +43,34 @@ def _load_generator(name: str, analysis):
     return cls(analysis)
 
 
-@click.group()
-@click.version_option(package_name="repoize")
-def main():
-    """repoize — 一条命令让任何项目对 AI Agent 友好。
+def _analyze_and_report(project_path: Path, scan_env: bool) -> ProjectAnalysis:
+    """分析项目并打印健康报告。
 
-    自动生成 AGENTS.md、CLAUDE.md、.cursorrules、MCP 配置、Skill 文件，
-    让 Claude Code、Cursor、Copilot 等 AI 编程助手立即理解你的项目。
+    Args:
+        project_path: 项目根目录路径
+        scan_env: 是否扫描环境变量
+
+    Returns:
+        项目分析结果
     """
-    pass
-
-
-@main.command()
-@click.argument("path", default=".", type=click.Path(exists=True))
-@click.option("--force", is_flag=True, help="覆盖已有配置文件")
-@click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
-def init(path, force, no_env):
-    """扫描项目并一键生成所有 Agent 配置文件。"""
-    project_path = Path(path).resolve()
-    console.print(f"[bold blue]🔍 正在扫描项目:[/bold blue] {project_path}")
-
-    if not no_env:
+    if scan_env:
         console.print("[dim]📡 扫描开发环境...[/dim]")
 
-    # 分析项目
-    analysis = analyze_project(project_path, scan_env=not no_env)
+    analysis = analyze_project(project_path, scan_env=scan_env)
     print_health_report(analysis, console)
+    return analysis
 
-    # 检查已有配置
+
+def _check_existing_configs(analysis: ProjectAnalysis, force: bool) -> bool:
+    """检查已有配置文件，如果需要确认则返回 True 表示继续。
+
+    Args:
+        analysis: 项目分析结果
+        force: 是否强制覆盖
+
+    Returns:
+        True 表示继续执行，False 表示取消
+    """
     existing = [c for c in analysis.existing_configs if c.exists]
     if existing and not force:
         console.print(f"[yellow]⚠️  检测到 {len(existing)} 个已有配置文件。[/yellow]")
@@ -69,12 +78,24 @@ def init(path, force, no_env):
             console.print(f"  - {c.name}")
         if not Confirm.ask("是否继续？已有文件将被跳过"):
             console.print("[dim]已取消。[/dim]")
-            return
+            return False
+    return True
 
-    # 生成所有配置文件
+
+def _generate_all_configs(project_path: Path, analysis: ProjectAnalysis, force: bool) -> tuple[list[str], list[str]]:
+    """生成所有配置文件。
+
+    Args:
+        project_path: 项目根目录路径
+        analysis: 项目分析结果
+        force: 是否强制覆盖
+
+    Returns:
+        (生成的文件列表, 跳过的文件列表)
+    """
     console.print("\n[bold]⚙️  开始生成配置文件...[/bold]\n")
-    generated = []
-    skipped = []
+    generated: list[str] = []
+    skipped: list[str] = []
 
     for gen_name in GENERATOR_MAP:
         gen = _load_generator(gen_name, analysis)
@@ -92,10 +113,53 @@ def init(path, force, no_env):
         except Exception as e:
             console.print(f"  [red]❌ 生成 {gen.output_filename} 失败: {e}[/red]")
 
-    # 汇总
+    return generated, skipped
+
+
+def _print_generation_summary(generated: list[str], skipped: list[str]) -> None:
+    """打印生成结果汇总。
+
+    Args:
+        generated: 生成的文件列表
+        skipped: 跳过的文件列表
+    """
     console.print(f"\n[bold green]✅ 完成！生成 {len(generated)} 个文件[/bold green]")
     if skipped:
         console.print(f"[yellow]⏭  跳过 {len(skipped)} 个已存在文件（使用 --force 覆盖）[/yellow]")
+
+
+@click.group()
+@click.version_option(package_name="repoize")
+def main() -> None:
+    """repoize — 一条命令让任何项目对 AI Agent 友好。
+
+    自动生成 AGENTS.md、CLAUDE.md、.cursorrules、MCP 配置、Skill 文件，
+    让 Claude Code、Cursor、Copilot 等 AI 编程助手立即理解你的项目。
+    """
+    pass
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--force", is_flag=True, help="覆盖已有配置文件")
+@click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
+def init(path: str, force: bool, no_env: bool) -> None:
+    """扫描项目并一键生成所有 Agent 配置文件。"""
+    project_path = Path(path).resolve()
+    console.print(f"[bold blue]🔍 正在扫描项目:[/bold blue] {project_path}")
+
+    # 分析项目并打印报告
+    analysis = _analyze_and_report(project_path, scan_env=not no_env)
+
+    # 检查已有配置
+    if not _check_existing_configs(analysis, force):
+        return
+
+    # 生成所有配置文件
+    generated, skipped = _generate_all_configs(project_path, analysis, force)
+
+    # 打印汇总
+    _print_generation_summary(generated, skipped)
 
 
 @main.command()
@@ -109,7 +173,7 @@ def init(path, force, no_env):
 )
 @click.option("--output", "output_file", type=click.Path(dir_okay=False), default=None, help="JSON 输出文件路径")
 @click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
-def analyze(path, output_format, output_file, no_env):
+def analyze(path: str, output_format: str, output_file: str | None, no_env: bool) -> None:
     """分析项目结构并输出健康度报告（不生成文件）。"""
     project_path = Path(path).resolve()
     console.print(f"[bold blue]📊 正在分析项目:[/bold blue] {project_path}")
@@ -128,7 +192,7 @@ def analyze(path, output_format, output_file, no_env):
     elif output_format == "terminal":
         print_health_report(analysis, console)
     else:
-        console.print("[yellow]⚠️  HTML 输出功能开发中...[/yellow]")
+        console.print("[yellow]⚠️  HTML 格式暂不支持，请使用 terminal 或 json[/yellow]")
 
 
 @main.command()
@@ -142,7 +206,7 @@ def analyze(path, output_format, output_file, no_env):
 )
 @click.option("--force", is_flag=True, help="覆盖已有配置文件")
 @click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
-def generate(path, file_types, force, no_env):
+def generate(path: str, file_types: tuple[str, ...], force: bool, no_env: bool) -> None:
     """选择性生成指定类型的配置文件。"""
     if not file_types:
         console.print("[red]请至少指定一个文件类型，例如: --type agents --type mcp[/red]")
@@ -181,16 +245,16 @@ def generate(path, file_types, force, no_env):
     help="要更新的配置文件类型（可多次指定）",
 )
 @click.option("--no-env", is_flag=True, help="跳过环境变量扫描")
-def update(path, file_types, no_env):
+def update(path: str, file_types: tuple[str, ...], no_env: bool) -> None:
     """增量更新已生成配置，保留手写内容。"""
     project_path = Path(path).resolve()
     console.print(f"[bold blue]🔄 正在更新配置:[/bold blue] {project_path}")
 
     analysis = analyze_project(project_path, scan_env=not no_env)
     selected_types = file_types or tuple(GENERATOR_MAP)
-    updated = []
-    created = []
-    skipped = []
+    updated: list[str] = []
+    created: list[str] = []
+    skipped: list[str] = []
 
     for gen_name in selected_types:
         gen = _load_generator(gen_name, analysis)
@@ -220,7 +284,7 @@ def update(path, file_types, no_env):
 
 @main.command()
 @click.argument("json_file", type=click.Path(exists=True, dir_okay=False))
-def validate(json_file):
+def validate(json_file: str) -> None:
     """校验 analyze --format json 输出是否符合 JSON Schema。"""
     import jsonschema
 
@@ -238,7 +302,7 @@ def validate(json_file):
 
 @main.command()
 @click.argument("path", default=".", type=click.Path(exists=True))
-def check(path):
+def check(path: str) -> None:
     """检查项目是否已具备 Agent 友好配置。"""
     project_path = Path(path).resolve()
     console.print(f"[bold blue]✅ 正在检查项目:[/bold blue] {project_path}")

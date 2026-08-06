@@ -22,12 +22,14 @@ class ConfigStatus:
     """配置文件状态。"""
 
     def __init__(self, name: str, config_type: str, exists: bool, path: Path):
+        """初始化配置状态。"""
         self.name = name
         self.config_type = config_type
         self.exists = exists
         self.path = path
 
     def __repr__(self) -> str:
+        """返回配置状态的字符串表示。"""
         status = "✅" if self.exists else "❌"
         return f"{status} {self.name}"
 

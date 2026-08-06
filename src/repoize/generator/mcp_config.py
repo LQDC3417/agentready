@@ -9,13 +9,16 @@ class McpConfigGenerator(BaseGenerator):
 
     @property
     def name(self) -> str:
+        """生成器名称。"""
         return "MCP 配置"
 
     @property
     def output_filename(self) -> str:
+        """输出文件名。"""
         return ".claude/mcp.json"
 
     def generate(self) -> str:
+        """生成文件内容。"""
         env = get_template_env()
         template = env.get_template("mcp_config.j2")
 

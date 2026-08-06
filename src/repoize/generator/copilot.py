@@ -9,13 +9,16 @@ class CopilotGenerator(BaseGenerator):
 
     @property
     def name(self) -> str:
+        """生成器名称。"""
         return "copilot-instructions.md"
 
     @property
     def output_filename(self) -> str:
+        """输出文件名。"""
         return ".github/copilot-instructions.md"
 
     def generate(self) -> str:
+        """生成文件内容。"""
         env = get_template_env()
         template = env.get_template("copilot.j2")
 

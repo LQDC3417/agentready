@@ -10,6 +10,7 @@ class CommandSet:
     """项目命令集合。"""
 
     def __init__(self):
+        """初始化命令集。"""
         self.build: list[str] = []
         self.test: list[str] = []
         self.lint: list[str] = []
@@ -17,6 +18,7 @@ class CommandSet:
         self.run: list[str] = []
 
     def to_dict(self) -> dict:
+        """返回 JSON 可序列化的字典。"""
         return {
             "build": self.build,
             "test": self.test,

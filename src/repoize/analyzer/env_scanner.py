@@ -1,4 +1,4 @@
-﻿"""环境变量扫描器 — 提取开发相关的环境信息"""
+"""环境变量扫描器 — 提取开发相关的环境信息"""
 
 import os
 import platform
@@ -204,5 +204,3 @@ def scan_environment() -> EnvInfo:
                 info.tools.append((tool_name, version))
 
     return info
-
-
