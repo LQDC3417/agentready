@@ -1,4 +1,4 @@
-﻿"""CLI 入口 — click 命令组"""
+"""CLI 入口 — click 命令组"""
 
 import json
 from pathlib import Path

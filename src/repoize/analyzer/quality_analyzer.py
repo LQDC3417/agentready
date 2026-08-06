@@ -211,13 +211,52 @@ def _detect_quality_tools(
     metrics: CodeQualityMetrics,
 ) -> None:
     """检测代码质量工具。"""
-    if not profile or not dependencies:
-        return
+    tools_found: set[str] = set()
 
-    # 检查依赖中是否包含质量工具
-    for tool in profile.quality_tools:
-        if any(tool in dep.lower() for dep in dependencies):
-            metrics.quality_tools_found.append(tool)
+    # 1. 从依赖中检测质量工具
+    if profile and dependencies:
+        for tool in profile.quality_tools:
+            if any(tool in dep.lower() for dep in dependencies):
+                tools_found.add(tool)
+
+    # 2. 从 pyproject.toml 配置节检测质量工具
+    try:
+        import tomllib
+
+        pyproject_path = project_path / "pyproject.toml"
+        if pyproject_path.exists():
+            with open(pyproject_path, "rb") as fh:
+                config = tomllib.load(fh)
+            tool_section = config.get("tool", {})
+            for tool_name in ["ruff", "mypy", "pytest", "black", "isort", "pylint", "flake8"]:
+                if tool_name in tool_section:
+                    tools_found.add(tool_name)
+    except Exception:
+        pass
+
+    # 3. 从独立配置文件检测质量工具
+    config_tool_map = {
+        ".eslintrc": "eslint",
+        ".eslintrc.js": "eslint",
+        ".eslintrc.json": "eslint",
+        ".eslintrc.yml": "eslint",
+        ".prettierrc": "prettier",
+        ".prettierrc.js": "prettier",
+        ".prettierrc.json": "prettier",
+        ".prettierrc.yml": "prettier",
+        ".flake8": "flake8",
+        "setup.cfg": "flake8",
+        "tox.ini": "tox",
+        ".pylintrc": "pylint",
+        "mypy.ini": "mypy",
+        ".mypy.ini": "mypy",
+    }
+
+    for config_file, tool_name in config_tool_map.items():
+        if (project_path / config_file).exists():
+            tools_found.add(tool_name)
+
+    metrics.quality_tools_found = sorted(tools_found)
 
 
 def _detect_quality_configs(project_path: Path, metrics: CodeQualityMetrics) -> None:

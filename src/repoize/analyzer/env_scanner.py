@@ -3,6 +3,7 @@
 import os
 import platform
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
 # 敏感变量名关键词（包含这些词的变量会被排除）
@@ -127,14 +128,15 @@ def _is_dev_related(name: str) -> bool:
     return any(name.startswith(prefix) for prefix in DEV_ENV_PREFIXES)
 
 
-def _run_tool_check(cmd: list[str], use_stderr: bool = False) -> str | None:
-    """运行工具版本检测命令，返回版本字符串或 None。"""
+def _run_tool_check(cmd: list[str], use_stderr: bool = False) -> tuple[str, str | None]:
+    """运行工具版本检测命令，返回 (工具名, 版本字符串) 或 (工具名, None)。"""
+    tool_name = cmd[0] if cmd else "unknown"
     try:
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=3,  # 减少超时时间从5秒到3秒
             shell=(platform.system() == "Windows"),
         )
         # 选择输出源：java -version 输出到 stderr
@@ -143,20 +145,20 @@ def _run_tool_check(cmd: list[str], use_stderr: bool = False) -> str | None:
             output = result.stdout.strip()
 
         if not output or result.returncode > 1:
-            return None
+            return tool_name, None
 
         first_line = output.split("\n")[0].strip()
         if not first_line or len(first_line) > 100:
-            return None
+            return tool_name, None
 
         # 排除错误信息
         lower = first_line.lower()
         if any(kw in lower for kw in ["not recognized", "not found", "no such", "error"]):
-            return None
+            return tool_name, None
 
-        return first_line
+        return tool_name, first_line
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-        return None
+        return tool_name, None
 
 
 def scan_environment() -> EnvInfo:
@@ -190,10 +192,16 @@ def scan_environment() -> EnvInfo:
             seen_paths.add(normalized)
             info.path_entries.append(entry)
 
-    # 工具版本检测
-    for tool_name, cmd, use_stderr in TOOL_CHECKS:
-        version = _run_tool_check(cmd, use_stderr=use_stderr)
-        if version:
-            info.tools.append((tool_name, version))
+    # 工具版本检测（并行执行）
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {
+            executor.submit(_run_tool_check, cmd, use_stderr): (tool_name, cmd, use_stderr)
+            for tool_name, cmd, use_stderr in TOOL_CHECKS
+        }
+
+        for future in as_completed(futures):
+            tool_name, version = future.result()
+            if version:
+                info.tools.append((tool_name, version))
 
     return info
