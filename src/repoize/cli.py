@@ -1,4 +1,4 @@
-"""CLI 入口 — click 命令组"""
+﻿"""CLI 入口 — click 命令组"""
 
 import json
 from pathlib import Path
@@ -121,7 +121,7 @@ def analyze(path, output_format, output_file, no_env):
         if output_file:
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(payload + "\n", encoding="utf-8")
+            output_path.write_text(payload + "\n", encoding="utf-8-sig")
             console.print(f"[green]✅ 已写入 {output_path}[/green]")
         else:
             console.print(payload)
@@ -226,8 +226,8 @@ def validate(json_file):
 
     json_path = Path(json_file)
     try:
-        data = json.loads(json_path.read_text(encoding="utf-8"))
-        schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+        data = json.loads(json_path.read_text(encoding="utf-8-sig"))
+        schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8-sig"))
         jsonschema.validate(data, schema)
     except (OSError, UnicodeDecodeError, ValueError, jsonschema.ValidationError) as e:
         console.print(f"[red]❌ JSON 校验失败: {e}[/red]")

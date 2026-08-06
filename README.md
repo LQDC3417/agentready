@@ -1,4 +1,4 @@
-# Repoize
+﻿# Repoize
 
 一条命令让任何项目对 AI Agent 友好。
 
@@ -66,6 +66,7 @@ repoize validate repoize-analysis.json
 - 测试和 CI/CD 状态
 - 常用命令提取
 - 开发环境信息
+- **代码质量分析**（新增）
 
 ### `repoize generate`
 
@@ -126,6 +127,63 @@ JSON Schema 位于 `src/repoize/schemas/analysis.schema.json`，可用于 GitHub
 | **PHP** | 基础 | 中 |
 | **其他** | 文件检测 | 基础 |
 
+## 代码质量分析（新功能）
+
+Repoize 现在提供代码质量分析功能，帮助您了解项目的代码健康状况：
+
+### 代码统计
+
+- **文件数**：项目中的代码文件数量
+- **总行数**：所有代码文件的总行数
+- **代码行**：实际代码行数（排除注释和空行）
+- **注释行**：注释行数
+- **空行**：空行数
+
+### 代码质量评分
+
+基于以下因素计算代码质量评分（0-100）：
+
+1. **代码质量工具**（20分）：是否使用了代码质量工具（如 ESLint、Prettier、Ruff 等）
+2. **质量配置文件**（15分）：是否有代码质量配置文件（如 .eslintrc、pyproject.toml 等）
+3. **测试覆盖**（10分）：是否有测试配置
+4. **CI/CD 配置**（5分）：是否有 CI/CD 配置
+5. **文件大小合理性**（10分）：平均文件大小是否合理（100-500 行）
+
+### 支持的代码质量工具
+
+Repoize 能够检测以下代码质量工具：
+
+**Python**
+- Ruff、Mypy、Pylint、Flake8、Bandit
+
+**JavaScript/TypeScript**
+- ESLint、Prettier、Jest、Vitest
+
+**Go**
+- golangci-lint、gofmt、goimports
+
+**Rust**
+- cargo-clippy、cargo-fmt、cargo-audit
+
+**Java**
+- Checkstyle、SpotBugs、PMD、Spotless
+
+**Ruby**
+- RuboCop、Brakeman、bundler-audit
+
+**PHP**
+- PHP-CS-Fixer、PHPStan、Psalm、PHPUnit
+
+### 使用示例
+
+```bash
+# 查看包含代码质量分析的完整报告
+repoize analyze
+
+# 输出 JSON 格式的分析结果
+repoize analyze --format json --output analysis.json
+```
+
 ## 设计特点
 
 - 纯本地分析，不调用 AI 模型，不依赖外部 API。
@@ -133,6 +191,7 @@ JSON Schema 位于 `src/repoize/schemas/analysis.schema.json`，可用于 GitHub
 - 语言 profile 驱动模板，不同语言生成对应的安装、构建、测试和 lint 命令。
 - 一个 CLI 同时维护 Claude Code、Cursor、GitHub Copilot、MCP 和 Skill 配置。
 - 增量更新会保留手写内容，JSON 输出带 Schema 可供 CI 校验。
+- **代码质量分析**：自动检测代码质量工具和配置，提供代码质量评分。
 
 ## 开发
 

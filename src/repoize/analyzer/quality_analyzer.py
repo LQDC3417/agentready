@@ -1,0 +1,361 @@
+"""代码质量分析器：分析项目的代码质量指标。"""
+
+from __future__ import annotations
+
+import os
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .language_profiles import LanguageProfile
+
+# 忽略的目录和文件
+IGNORE_PATTERNS = {
+    "node_modules",
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".next",
+    ".nuxt",
+    "target",
+    "vendor",
+    ".idea",
+    ".vscode",
+    ".DS_Store",
+    "Thumbs.db",
+}
+
+# 代码文件扩展名
+CODE_EXTENSIONS = {
+    ".py",
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".rb",
+    ".php",
+    ".c",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".cs",
+    ".swift",
+    ".kt",
+    ".scala",
+    ".clj",
+    ".ex",
+    ".exs",
+    ".erl",
+    ".hs",
+}
+
+
+@dataclass
+class CodeQualityMetrics:
+    """代码质量指标。"""
+
+    total_files: int = 0
+    total_lines: int = 0
+    code_lines: int = 0
+    comment_lines: int = 0
+    blank_lines: int = 0
+
+    # 文件统计
+    files_by_language: dict[str, int] = field(default_factory=dict)
+    lines_by_language: dict[str, int] = field(default_factory=dict)
+
+    # 代码复杂度指标
+    avg_function_length: float = 0.0
+    max_function_length: int = 0
+
+    # 代码重复指标
+    duplicate_files: int = 0
+    duplicate_lines: int = 0
+
+    # 代码质量工具
+    quality_tools_found: list[str] = field(default_factory=list)
+    quality_config_found: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        """返回 JSON 可序列化的字典。"""
+        return {
+            "total_files": self.total_files,
+            "total_lines": self.total_lines,
+            "code_lines": self.code_lines,
+            "comment_lines": self.comment_lines,
+            "blank_lines": self.blank_lines,
+            "files_by_language": self.files_by_language,
+            "lines_by_language": self.lines_by_language,
+            "avg_function_length": self.avg_function_length,
+            "max_function_length": self.max_function_length,
+            "duplicate_files": self.duplicate_files,
+            "duplicate_lines": self.duplicate_lines,
+            "quality_tools_found": self.quality_tools_found,
+            "quality_config_found": self.quality_config_found,
+        }
+
+
+def analyze_code_quality(
+    project_path: Path,
+    profile: LanguageProfile | None = None,
+    dependencies: list[str] | None = None,
+) -> CodeQualityMetrics:
+    """分析项目的代码质量。
+
+    Args:
+        project_path: 项目根目录
+        profile: 语言画像
+        dependencies: 依赖列表
+
+    Returns:
+        CodeQualityMetrics: 代码质量指标
+    """
+    metrics = CodeQualityMetrics()
+
+    # 统计文件和行数
+    _count_files_and_lines(project_path, metrics)
+
+    # 检测代码质量工具
+    _detect_quality_tools(project_path, profile, dependencies, metrics)
+
+    # 检测代码质量配置文件
+    _detect_quality_configs(project_path, metrics)
+
+    # 计算代码复杂度（简化版）
+    _calculate_complexity(project_path, metrics)
+
+    # 检测代码重复（简化版）
+    _detect_duplicates(project_path, metrics)
+
+    return metrics
+
+
+def _count_files_and_lines(project_path: Path, metrics: CodeQualityMetrics) -> None:
+    """统计文件数量和行数。"""
+    for root, dirs, files in os.walk(project_path):
+        # 过滤忽略的目录
+        dirs[:] = [d for d in dirs if d not in IGNORE_PATTERNS]
+
+        for file in files:
+            file_path = Path(root) / file
+            if file_path.suffix in CODE_EXTENSIONS:
+                metrics.total_files += 1
+
+                # 统计语言
+                lang = _get_language_from_extension(file_path.suffix)
+                metrics.files_by_language[lang] = metrics.files_by_language.get(lang, 0) + 1
+
+                # 统计行数
+                try:
+                    with open(file_path, encoding="utf-8", errors="ignore") as f:
+                        lines = f.readlines()
+                        total = len(lines)
+                        metrics.total_lines += total
+                        metrics.lines_by_language[lang] = metrics.lines_by_language.get(lang, 0) + total
+
+                        # 分类行数
+                        for line in lines:
+                            line = line.strip()
+                            if not line:
+                                metrics.blank_lines += 1
+                            elif line.startswith(("#", "//", "/*", "*", "<!--")):
+                                metrics.comment_lines += 1
+                            else:
+                                metrics.code_lines += 1
+                except (OSError, UnicodeDecodeError):
+                    pass
+
+
+def _get_language_from_extension(ext: str) -> str:
+    """根据文件扩展名返回语言名称。"""
+    ext_map = {
+        ".py": "Python",
+        ".js": "JavaScript",
+        ".ts": "TypeScript",
+        ".jsx": "JavaScript (JSX)",
+        ".tsx": "TypeScript (TSX)",
+        ".go": "Go",
+        ".rs": "Rust",
+        ".java": "Java",
+        ".rb": "Ruby",
+        ".php": "PHP",
+        ".c": "C",
+        ".cpp": "C++",
+        ".h": "C/C++ Header",
+        ".hpp": "C++ Header",
+        ".cs": "C#",
+        ".swift": "Swift",
+        ".kt": "Kotlin",
+        ".scala": "Scala",
+        ".clj": "Clojure",
+        ".ex": "Elixir",
+        ".exs": "Elixir Script",
+        ".erl": "Erlang",
+        ".hs": "Haskell",
+    }
+    return ext_map.get(ext, "Unknown")
+
+
+def _detect_quality_tools(
+    project_path: Path,
+    profile: LanguageProfile | None,
+    dependencies: list[str] | None,
+    metrics: CodeQualityMetrics,
+) -> None:
+    """检测代码质量工具。"""
+    if not profile or not dependencies:
+        return
+
+    # 检查依赖中是否包含质量工具
+    for tool in profile.quality_tools:
+        if any(tool in dep.lower() for dep in dependencies):
+            metrics.quality_tools_found.append(tool)
+
+
+def _detect_quality_configs(project_path: Path, metrics: CodeQualityMetrics) -> None:
+    """检测代码质量配置文件。"""
+    quality_configs = [
+        # Python
+        ".flake8",
+        "setup.cfg",
+        "pyproject.toml",
+        "tox.ini",
+        ".pylintrc",
+        ".mypy.ini",
+        "mypy.ini",
+        # JavaScript/TypeScript
+        ".eslintrc",
+        ".eslintrc.js",
+        ".eslintrc.json",
+        ".eslintrc.yml",
+        ".prettierrc",
+        ".prettierrc.js",
+        ".prettierrc.json",
+        ".prettierrc.yml",
+        "tsconfig.json",
+        # Go
+        ".golangci.yml",
+        ".golangci.yaml",
+        # Rust
+        "rustfmt.toml",
+        ".rustfmt.toml",
+        "clippy.toml",
+        # Java
+        "checkstyle.xml",
+        "spotbugs.xml",
+        "pmd.xml",
+        # Ruby
+        ".rubocop.yml",
+        # PHP
+        ".php-cs-fixer.php",
+        ".php_cs",
+        "phpstan.neon",
+        # 通用
+        ".editorconfig",
+        ".gitattributes",
+    ]
+
+    for config in quality_configs:
+        if (project_path / config).exists():
+            metrics.quality_config_found.append(config)
+
+
+def _calculate_complexity(project_path: Path, metrics: CodeQualityMetrics) -> None:
+    """计算代码复杂度（简化版）。"""
+    # 这里只做简单的函数长度统计
+    # 实际的复杂度计算需要更复杂的AST解析
+
+    function_lengths = []
+
+    for root, dirs, files in os.walk(project_path):
+        dirs[:] = [d for d in dirs if d not in IGNORE_PATTERNS]
+
+        for file in files:
+            file_path = Path(root) / file
+            if file_path.suffix in CODE_EXTENSIONS:
+                try:
+                    with open(file_path, encoding="utf-8", errors="ignore") as f:
+                        content = f.read()
+
+                        # 简单的函数长度检测
+                        if file_path.suffix == ".py":
+                            # Python函数定义
+                            functions = re.findall(r"def\s+\w+\s*\(.*?\):", content)
+                            for func in functions:
+                                # 计算函数体长度（简化）
+                                func_start = content.find(func)
+                                if func_start != -1:
+                                    # 找到下一个函数或文件结束
+                                    next_func = content.find("\ndef ", func_start + 1)
+                                    if next_func == -1:
+                                        func_body = content[func_start:]
+                                    else:
+                                        func_body = content[func_start:next_func]
+
+                                    func_lines = func_body.count("\n") + 1
+                                    function_lengths.append(func_lines)
+
+                        elif file_path.suffix in (".js", ".ts", ".jsx", ".tsx"):
+                            # JavaScript/TypeScript函数定义
+                            functions = re.findall(
+                                r"(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:function|\(.*?\)\s*=>))", content
+                            )
+                            for func in functions:
+                                func_start = content.find(func)
+                                if func_start != -1:
+                                    # 简单计算函数长度
+                                    func_lines = content[func_start:].count("\n") + 1
+                                    function_lengths.append(func_lines)
+
+                except (OSError, UnicodeDecodeError):
+                    pass
+
+    if function_lengths:
+        metrics.avg_function_length = sum(function_lengths) / len(function_lengths)
+        metrics.max_function_length = max(function_lengths)
+
+
+def _detect_duplicates(project_path: Path, metrics: CodeQualityMetrics) -> None:
+    """检测代码重复（简化版）。"""
+    # 这里只做简单的文件内容比较
+    # 实际的重复检测需要更复杂的算法
+
+    file_hashes: dict[str, list[Path]] = {}
+
+    for root, dirs, files in os.walk(project_path):
+        dirs[:] = [d for d in dirs if d not in IGNORE_PATTERNS]
+
+        for file in files:
+            file_path = Path(root) / file
+            if file_path.suffix in CODE_EXTENSIONS:
+                try:
+                    with open(file_path, encoding="utf-8", errors="ignore") as f:
+                        content = f.read()
+                        # 简单的哈希比较
+                        content_hash = hash(content)
+                        if content_hash in file_hashes:
+                            file_hashes[content_hash].append(file_path)
+                        else:
+                            file_hashes[content_hash] = [file_path]
+                except (OSError, UnicodeDecodeError):
+                    pass
+
+    # 统计重复文件
+    for _hash_val, files in file_hashes.items():
+        if len(files) > 1:
+            metrics.duplicate_files += len(files) - 1
+            # 简单统计重复行数（取第一个文件的行数）
+            try:
+                with open(files[0], encoding="utf-8", errors="ignore") as f:
+                    lines = f.readlines()
+                    metrics.duplicate_lines += len(lines) * (len(files) - 1)
+            except (OSError, UnicodeDecodeError):
+                pass

@@ -58,6 +58,18 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
 
     console.print(f"\n[bold]Agent 就绪度:[/bold] [{style}]{label} ({score}/100)[/{style}]")
 
+    # 代码质量评分
+    quality_score = analysis.code_quality_score
+    quality_label = analysis.code_quality_label
+    if quality_score >= 80:
+        quality_style = "green"
+    elif quality_score >= 60:
+        quality_style = "yellow"
+    else:
+        quality_style = "red"
+
+    console.print(f"[bold]代码质量:[/bold] [{quality_style}]{quality_label} ({quality_score}/100)[/{quality_style}]")
+
     # 配置文件状态表
     table = Table(show_header=True, header_style="bold")
     table.add_column("配置文件", style="cyan")
@@ -86,6 +98,21 @@ def print_health_report(analysis: ProjectAnalysis, console: Console | None = Non
 
     console.print()
     console.print(table)
+
+    # 代码质量详情
+    if analysis.quality_metrics.total_files > 0:
+        console.print("\n[bold]代码统计:[/bold]")
+        console.print(f"  文件数: [cyan]{analysis.quality_metrics.total_files}[/cyan]")
+        console.print(f"  总行数: [cyan]{analysis.quality_metrics.total_lines:,}[/cyan]")
+        console.print(f"  代码行: [cyan]{analysis.quality_metrics.code_lines:,}[/cyan]")
+        console.print(f"  注释行: [cyan]{analysis.quality_metrics.comment_lines:,}[/cyan]")
+        console.print(f"  空行: [cyan]{analysis.quality_metrics.blank_lines:,}[/cyan]")
+
+        if analysis.quality_metrics.quality_tools_found:
+            console.print(f"  质量工具: [green]{', '.join(analysis.quality_metrics.quality_tools_found)}[/green]")
+
+        if analysis.quality_metrics.quality_config_found:
+            console.print(f"  质量配置: [green]{', '.join(analysis.quality_metrics.quality_config_found)}[/green]")
 
     # 开发环境摘要
     if analysis.env_info.tools:

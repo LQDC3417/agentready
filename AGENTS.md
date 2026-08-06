@@ -1,4 +1,4 @@
-# git_proj
+﻿# git_proj
 
 > 本文件由 [repoize](https://github.com/LQDC3417/repoize) 自动生成，请根据项目实际情况调整。
 
@@ -69,3 +69,37 @@ git_proj/
 - 遵循项目已有代码风格
 - 修改代码前先理解现有逻辑，保持最小化改动
 - 提交前运行 lint 和测试确保通过
+
+## 代码质量分析
+
+本项目使用 Repoize 进行代码质量分析，包括：
+
+### 代码统计
+- 文件数、总行数、代码行、注释行、空行
+- 按语言分类的文件和行数统计
+
+### 代码质量评分
+基于以下因素计算代码质量评分（0-100）：
+1. 代码质量工具使用情况（20分）
+2. 质量配置文件存在情况（15分）
+3. 测试覆盖情况（10分）
+4. CI/CD 配置情况（5分）
+5. 文件大小合理性（10分）
+
+### 支持的代码质量工具
+- Python: Ruff、Mypy、Pylint、Flake8、Bandit
+- JavaScript/TypeScript: ESLint、Prettier、Jest、Vitest
+- Go: golangci-lint、gofmt、goimports
+- Rust: cargo-clippy、cargo-fmt、cargo-audit
+- Java: Checkstyle、SpotBugs、PMD、Spotless
+- Ruby: RuboCop、Brakeman、bundler-audit
+- PHP: PHP-CS-Fixer、PHPStan、Psalm、PHPUnit
+
+### 使用示例
+```bash
+# 查看包含代码质量分析的完整报告
+repoize analyze
+
+# 输出 JSON 格式的分析结果
+repoize analyze --format json --output analysis.json
+```

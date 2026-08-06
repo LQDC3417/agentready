@@ -9,6 +9,7 @@ from .dep_parser import DepInfo, parse_dependencies
 from .env_scanner import EnvInfo, scan_environment
 from .lang_detector import IGNORE_DIRS, detect_languages, get_primary_language
 from .language_profiles import LanguageProfile, detect_frameworks, get_language_profile
+from .quality_analyzer import CodeQualityMetrics, analyze_code_quality
 
 _TREE_MAX_DEPTH = 2
 
@@ -31,6 +32,7 @@ class ProjectAnalysis:
     profile: LanguageProfile | None = None
     frameworks: list[str] = field(default_factory=list)
     directory_tree: str = ""
+    quality_metrics: CodeQualityMetrics = field(default_factory=CodeQualityMetrics)
 
     @property
     def agent_ready_score(self) -> int:
@@ -60,6 +62,48 @@ class ProjectAnalysis:
             return "部分就绪"
         return "未配置"
 
+    @property
+    def code_quality_score(self) -> int:
+        """代码质量评分（0-100）。"""
+        score = 50  # 基础分
+
+        # 有代码质量工具加分
+        if self.quality_metrics.quality_tools_found:
+            score += 20
+
+        # 有代码质量配置加分
+        if self.quality_metrics.quality_config_found:
+            score += 15
+
+        # 有测试加分
+        if self.has_tests:
+            score += 10
+
+        # 有CI加分
+        if self.has_ci:
+            score += 5
+
+        # 代码行数合理性（避免过大的文件）
+        if self.quality_metrics.total_files > 0:
+            avg_lines = self.quality_metrics.total_lines / self.quality_metrics.total_files
+            if 100 <= avg_lines <= 500:
+                score += 10  # 合理的文件大小
+            elif avg_lines > 1000:
+                score -= 10  # 文件过大
+
+        return min(max(score, 0), 100)
+
+    @property
+    def code_quality_label(self) -> str:
+        s = self.code_quality_score
+        if s >= 80:
+            return "优秀"
+        if s >= 60:
+            return "良好"
+        if s >= 40:
+            return "一般"
+        return "需要改进"
+
     def to_dict(self) -> dict:
         """返回 JSON 可序列化的项目分析结果。"""
         return {
@@ -79,6 +123,9 @@ class ProjectAnalysis:
             "has_ci": self.has_ci,
             "agent_ready_score": self.agent_ready_score,
             "agent_ready_label": self.agent_ready_label,
+            "code_quality_score": self.code_quality_score,
+            "code_quality_label": self.code_quality_label,
+            "quality_metrics": self.quality_metrics.to_dict(),
         }
 
 
@@ -132,6 +179,10 @@ def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysi
     # 生成目录树
     directory_tree = _build_directory_tree(project_path)
 
+    # 分析代码质量
+    dep_names = [dep.name for dep in deps]
+    quality_metrics = analyze_code_quality(project_path, profile, dep_names)
+
     return ProjectAnalysis(
         project_path=project_path,
         project_name=project_path.name,
@@ -147,6 +198,7 @@ def analyze_project(project_path: Path, scan_env: bool = True) -> ProjectAnalysi
         profile=profile,
         frameworks=frameworks,
         directory_tree=directory_tree,
+        quality_metrics=quality_metrics,
     )
 
 

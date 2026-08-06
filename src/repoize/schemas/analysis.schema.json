@@ -1,4 +1,4 @@
-{
+﻿{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/LQDC3417/repoize/main/src/repoize/schemas/analysis.schema.json",
   "title": "Repoize Analysis",
@@ -19,7 +19,10 @@
     "test_framework",
     "has_ci",
     "agent_ready_score",
-    "agent_ready_label"
+    "agent_ready_label",
+    "code_quality_score",
+    "code_quality_label",
+    "quality_metrics"
   ],
   "properties": {
     "schema_version": {
@@ -94,6 +97,17 @@
     },
     "agent_ready_label": {
       "type": "string"
+    },
+    "code_quality_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "code_quality_label": {
+      "type": "string"
+    },
+    "quality_metrics": {
+      "$ref": "#/$defs/quality_metrics"
     }
   },
   "additionalProperties": false,
@@ -219,6 +233,89 @@
           }
         },
         "path_entries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "quality_metrics": {
+      "type": "object",
+      "required": [
+        "total_files",
+        "total_lines",
+        "code_lines",
+        "comment_lines",
+        "blank_lines",
+        "files_by_language",
+        "lines_by_language",
+        "avg_function_length",
+        "max_function_length",
+        "duplicate_files",
+        "duplicate_lines",
+        "quality_tools_found",
+        "quality_config_found"
+      ],
+      "properties": {
+        "total_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_lines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "code_lines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "comment_lines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blank_lines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "files_by_language": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "lines_by_language": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "avg_function_length": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_function_length": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "duplicate_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "duplicate_lines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "quality_tools_found": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quality_config_found": {
           "type": "array",
           "items": {
             "type": "string"
