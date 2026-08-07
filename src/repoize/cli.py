@@ -110,7 +110,7 @@ def _generate_all_configs(project_path: Path, analysis: ProjectAnalysis, force: 
             gen.write(project_path, force=force)
             generated.append(gen.output_filename)
             console.print(f"  [green]✅ 生成 {gen.output_filename}[/green]")
-        except Exception as e:
+        except (OSError, ValueError, FileExistsError) as e:
             console.print(f"  [red]❌ 生成 {gen.output_filename} 失败: {e}[/red]")
 
     return generated, skipped
@@ -231,7 +231,7 @@ def generate(path: str, file_types: tuple[str, ...], force: bool, no_env: bool) 
         try:
             gen.write(project_path, force=force)
             console.print(f"  [green]✅ 生成 {gen.output_filename}[/green]")
-        except Exception as e:
+        except (OSError, ValueError, FileExistsError) as e:
             console.print(f"  [red]❌ 生成 {gen.output_filename} 失败: {e}[/red]")
 
 
@@ -274,7 +274,7 @@ def update(path: str, file_types: tuple[str, ...], no_env: bool) -> None:
             else:
                 updated.append(gen.output_filename)
                 console.print(f"  [green]✅ 更新 {gen.output_filename}[/green]")
-        except Exception as e:
+        except (OSError, ValueError, UnicodeDecodeError) as e:
             console.print(f"  [red]❌ 更新 {gen.output_filename} 失败: {e}[/red]")
 
     console.print(f"\n[bold green]✅ 完成！更新 {len(updated)} 个，创建 {len(created)} 个文件[/bold green]")

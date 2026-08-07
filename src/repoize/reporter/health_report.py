@@ -8,7 +8,7 @@ from rich.text import Text
 from ..analyzer.project_analyzer import ProjectAnalysis
 
 
-def print_health_report(analysis: ProjectAnalysis, console: Console | None = None):
+def print_health_report(analysis: ProjectAnalysis, console: Console | None = None) -> None:
     """输出终端格式的健康度报告。"""
     if console is None:
         console = Console()
