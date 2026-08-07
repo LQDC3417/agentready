@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2026-08-06
+## [0.1.0] - 2026-08-07
 
 ### Added
 
@@ -19,4 +19,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JSON 输出：支持 Schema 校验
 - 敏感环境变量自动过滤
 - 并行工具检测优化性能
-- 完整的测试覆盖（62 个测试）
+- 完整的测试覆盖（97 个测试）
+- 贡献指南（CONTRIBUTING.md）
+- GitHub Release 自动化发布流程
+
+### Fixed
+
+- 打破 language_profiles 和 dep_parser 之间的循环依赖
+- 添加 health_report.py 返回类型注解
+- 优化 cli.py 异常处理：捕获更具体的异常类型
+- 优化 quality_analyzer.py 静默异常处理
+- 补充 config_scanner.py 完整测试覆盖
+- 统一代码格式（移除 BOM，修复尾随空行）
+
+### Changed
+
+- 更新测试数量：从 62 个增加到 97 个
+- 更新 CI/CD 配置：支持 Python 3.10-3.13
+- 更新文档：添加中英文双语 README
+
+## [Unreleased]
+
+### Added
+
+- 计划：交互式CLI向导（`repoize wizard`）
+- 计划：配置持久化（`.repoize.toml`）
+- 计划：进度条显示
+- 计划：HTML分析报告
+- 计划：自定义模板目录
+- 计划：Mermaid依赖关系图表
+- 计划：多项目批量分析
