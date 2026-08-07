@@ -1,13 +1,18 @@
-"""依赖文件解析器 — 支持多种包管理格式"""
+﻿"""依赖文件解析器 — 支持多种包管理格式"""
+
+from __future__ import annotations
 
 import re
 from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from .language_profiles import LanguageProfile
+if TYPE_CHECKING:
+    from .language_profiles import LanguageProfile
 
 
 class DepInfo:
+
     """依赖信息。"""
 
     def __init__(self, name: str, version_spec: str = "", dev: bool = False):
@@ -382,3 +387,4 @@ def _parse_composer_json(filepath: Path) -> list[DepInfo]:
     for name in data.get("require-dev", {}):
         deps.append(DepInfo(name, dev=True))
     return deps
+
